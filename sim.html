@@ -1,0 +1,1146 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AmplifyME 赛前练习模拟器</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#E9EDF3; --panel:#FFFFFF; --sunk:#F2F5F9; --line:#D3DBE6; --ink:#122033; --muted:#5A6A80;
+  --accent:#1F5FD1; --accent-ink:#FFFFFF; --bid:#0C8059; --offer:#C2352B; --warn:#A66A0C; --warn-soft:#FBF0DC; --chip:#E3EAF4;
+  --sans:"IBM Plex Sans","Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  color-scheme:light; box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#081221; --panel:#0F1D33; --sunk:#0B1729; --line:#21365A; --ink:#E4ECF7; --muted:#8EA2BF;
+    --accent:#4B8BFF; --accent-ink:#06101F; --bid:#33C78D; --offer:#FF6E61; --warn:#F2B24A; --warn-soft:#33270F; --chip:#182B49; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#081221; --panel:#0F1D33; --sunk:#0B1729; --line:#21365A; --ink:#E4ECF7; --muted:#8EA2BF;
+  --accent:#4B8BFF; --accent-ink:#06101F; --bid:#33C78D; --offer:#FF6E61; --warn:#F2B24A; --warn-soft:#33270F; --chip:#182B49; color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:13.5px;line-height:1.5;font-variant-numeric:tabular-nums}
+button{font:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:6px 20px;padding:10px 14px;background:var(--panel);border-bottom:1px solid var(--line)}
+.brand{font-weight:700;font-size:15px;margin-right:6px}
+.brand small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.clock{font-size:18px;font-weight:700;min-width:64px}
+.metric{display:flex;flex-direction:column;line-height:1.2}
+.metric span{font-size:11.5px;color:var(--muted)}
+.metric b{font-size:15px;font-weight:600}
+.pos{color:var(--bid)} .neg{color:var(--offer)} .wrn{color:var(--warn)}
+.ctrls{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--sunk);color:var(--ink);border-radius:6px;padding:5px 11px}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+.btn.buy{background:var(--bid);border-color:var(--bid);color:#fff;font-weight:600}
+.btn.sell{background:var(--offer);border-color:var(--offer);color:#fff;font-weight:600}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.grid{display:grid;gap:10px;padding:10px;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr) minmax(0,1.5fr);
+  grid-template-areas:"eq news pos" "chat ex chart"}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;display:flex;flex-direction:column;min-width:0;min-height:0}
+.card>h2{font-size:13px;font-weight:600;margin:0;padding:8px 12px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
+.card>h2 .sub{font-weight:400;color:var(--muted);font-size:12px}
+.card>h2 .tabs{margin-left:auto;display:flex;gap:4px}
+.card>h2 .tabs button{border:1px solid var(--line);background:none;color:var(--muted);border-radius:5px;padding:1px 8px;font-size:12px}
+.card>h2 .tabs button[aria-pressed="true"]{color:var(--ink);border-color:var(--accent)}
+.scroll{overflow:auto}
+#eq{grid-area:eq} #news{grid-area:news} #posc{grid-area:pos} #chat{grid-area:chat} #ex{grid-area:ex} #chartc{grid-area:chart}
+#eq,#news,#posc{height:300px}
+#chat,#ex,#chartc{height:470px}
+table{border-collapse:collapse;width:100%}
+th{font-size:11.5px;font-weight:500;color:var(--muted);text-align:right;padding:5px 8px;border-bottom:1px solid var(--line);white-space:nowrap;position:sticky;top:0;background:var(--panel)}
+td{text-align:right;padding:5px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+tr.click{cursor:pointer}
+tr.click:hover td{background:var(--sunk)}
+tr.sel td{background:var(--chip)}
+.newsitem{padding:7px 12px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:56px 1fr;gap:2px 8px}
+.newsitem .tk{font-weight:700;font-size:12px}
+.newsitem .zh{grid-column:2;color:var(--muted);font-size:12px}
+.newsitem.fresh{background:var(--warn-soft)}
+.wbar{position:relative;height:6px;background:var(--sunk);border-radius:3px;min-width:70px}
+.wbar .band{position:absolute;top:0;bottom:0;left:20%;width:40%;background:var(--chip);border-radius:3px}
+.wbar .mk{position:absolute;top:-3px;width:3px;height:12px;border-radius:2px;background:var(--ink)}
+.chatlog{flex:1;overflow:auto;padding:8px 10px;display:flex;flex-direction:column;gap:6px;background:var(--sunk)}
+.msg{max-width:92%;padding:6px 9px;border-radius:8px;background:var(--panel);border:1px solid var(--line)}
+.msg .who{font-size:11px;color:var(--muted)}
+.msg .zh{font-size:12px;color:var(--muted);margin-top:2px}
+.msg.you{align-self:flex-end;background:var(--chip);border-color:transparent}
+.msg.sys{align-self:center;background:transparent;border:1px dashed var(--line);color:var(--muted);font-size:12px;max-width:100%}
+.msg.alert{border-color:var(--warn);color:var(--warn);background:var(--warn-soft)}
+.chatin{display:flex;gap:6px;padding:8px;border-top:1px solid var(--line)}
+.chatin input{flex:1;min-width:0}
+input,select{font:inherit;color:var(--ink);background:var(--sunk);border:1px solid var(--line);border-radius:6px;padding:5px 8px;width:100%}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;padding:10px 12px;border-top:1px solid var(--line)}
+.form label{font-size:11.5px;color:var(--muted);display:flex;flex-direction:column;gap:2px}
+.form .full{grid-column:1/-1}
+.form .row{display:flex;gap:6px}
+.quotes{border-top:1px solid var(--line);max-height:170px;overflow:auto}
+.qcard{display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center;padding:7px 12px;border-bottom:1px solid var(--line)}
+.qcard small{color:var(--muted)}
+.exbody{padding:10px 12px;display:flex;flex-direction:column;gap:8px;overflow:auto}
+.exprices{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.exprices button{padding:8px 6px;border-radius:6px;border:0;color:#fff;font-weight:600;line-height:1.3}
+.exprices button small{display:block;font-weight:400;font-size:11px;opacity:.9}
+.kv{display:flex;justify-content:space-between;border:1px solid var(--line);border-radius:6px;padding:5px 9px;background:var(--sunk)}
+.kv span{color:var(--muted)}
+.quick{display:flex;gap:4px;flex-wrap:wrap}
+.quick button{font-size:12px;padding:2px 8px}
+.depth td,.depth th{padding:2px 8px;font-size:12px}
+.depth .b{color:var(--bid)} .depth .o{color:var(--offer)}
+.hint{font-size:12px;color:var(--muted);margin:0}
+.chartwrap{flex:1;position:relative;min-height:0}
+canvas{position:absolute;inset:0;width:100%;height:100%}
+.status{padding:6px 12px;font-size:12px;border-top:1px solid var(--line);color:var(--muted)}
+.overlay{position:fixed;inset:0;background:rgba(5,12,25,.55);display:grid;place-items:center;padding:16px;z-index:20}
+.overlay[hidden]{display:none}
+.modal{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:12px;max-width:720px;width:100%;max-height:calc(100vh - 32px);overflow:auto;padding:22px 24px}
+.modal h1{font-size:22px;margin:0 0 4px}
+.modal p{margin:6px 0}
+.roles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+.roles label{border:1.5px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer;display:block}
+.roles label:has(input:checked){border-color:var(--accent);background:var(--chip)}
+.roles input{margin-right:6px}
+.roles b{font-size:15px}
+.roles p{color:var(--muted);font-size:13px}
+.lens{display:flex;gap:14px;flex-wrap:wrap;margin:6px 0 14px}
+.modal table td,.modal table th{text-align:left;white-space:normal;vertical-align:top}
+.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--panel);padding:8px 14px;border-radius:8px;z-index:30;max-width:90vw;font-size:13px}
+.toast[hidden]{display:none}
+.metric .gd{font-style:normal;font-size:11px;line-height:1.2;color:var(--muted)}
+.metric .gd.ok{color:var(--bid)} .metric .gd.mid{color:var(--warn)} .metric .gd.bad{color:var(--offer)}
+.metric.key span::before{content:"★ ";color:var(--warn)}
+.alerts{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 14px;background:var(--sunk);border-bottom:1px solid var(--line);font-size:12.5px}
+.alerts[hidden]{display:none}
+.alerts .lbl{font-weight:600;margin-right:4px}
+.al{padding:3px 10px;border-radius:6px;border:1px solid var(--line);background:var(--panel)}
+.al.red{border-color:var(--offer);color:var(--offer)} .al.amber{border-color:var(--warn);color:var(--warn)} .al.green{border-color:var(--bid);color:var(--bid)} .al.info{color:var(--muted)}
+.coach{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));width:min(400px,calc(100vw - 32px));background:var(--panel);border:2px solid var(--accent);border-radius:12px;padding:14px 16px;z-index:25;box-shadow:0 8px 28px rgba(0,0,0,.28);max-height:60vh;overflow:auto}
+.coach[hidden]{display:none}
+.coach h3{margin:2px 0 6px;font-size:16px}
+.coach .stepn{font-size:12px;color:var(--muted)}
+.coach p,.coach div.cb{margin:4px 0;line-height:1.6}
+.coach .row{display:flex;gap:8px;justify-content:flex-end;margin-top:10px;flex-wrap:wrap}
+.hl{outline:3px solid var(--accent);outline-offset:2px;border-radius:8px}
+.modes label{display:block;margin:4px 0}
+.modes small{color:var(--muted)}
+@media (max-width:720px){.coach{left:8px;right:8px;width:auto;bottom:8px}}
+@media (max-width:1150px){
+  .grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"eq pos" "news news" "chat ex" "chart chart"}
+  #news{height:240px} #chartc{height:380px}
+}
+@media (max-width:720px){
+  .grid{grid-template-columns:minmax(0,1fr);grid-template-areas:"eq" "chat" "ex" "pos" "news" "chart"}
+  #eq,#posc{height:auto;max-height:320px} #chat{height:520px} #ex{height:auto} .roles{grid-template-columns:1fr}
+  .ctrls{margin-left:0}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">赛前练习模拟器<small id="roleLabel">选择角色开始</small></div>
+  <div class="clock" id="clock" aria-label="剩余时间">--:--</div>
+  <div id="metrics" style="display:flex;flex-wrap:wrap;gap:6px 18px"></div>
+  <div class="ctrls">
+    <a class="btn" href="index.html" style="text-decoration:none">首页</a>
+    <button class="btn" id="guideBtn" aria-pressed="true">盯盘提示：开</button>
+    <button class="btn" id="rulesBtn">规则</button>
+    <button class="btn" id="speedBtn">速度 1x</button>
+    <button class="btn" id="pauseBtn">暂停</button>
+    <button class="btn" id="endBtn">结束本局</button>
+  </div>
+</header>
+<div class="alerts" id="alerts" hidden aria-live="polite"></div>
+
+<main class="grid">
+  <section class="card" id="eq"><h2>行情 Equities <span class="sub">点击切换股票</span></h2><div class="scroll"><table><thead><tr><th>代码 Ticker</th><th>参考价 RefPrice</th><th>涨跌 %Chg</th><th>走势</th></tr></thead><tbody id="eqBody"></tbody></table></div></section>
+
+  <section class="card" id="news"><h2>新闻 News <span class="sub">MACRO 影响全部股票</span></h2><div class="scroll" id="newsBody"></div></section>
+
+  <section class="card" id="posc"><h2><span id="posTitle">持仓 Positions</span><span class="tabs"><button aria-pressed="true" data-pv="pos">持仓</button><button aria-pressed="false" data-pv="blot">成交记录 Blotter</button></span></h2><div class="scroll" id="posBody"></div></section>
+
+  <section class="card" id="chat"><h2 id="chatTitle">聊天</h2>
+    <div class="chatlog" id="chatLog" aria-live="polite"></div>
+    <div id="chatExtra"></div>
+  </section>
+
+  <section class="card" id="ex"><h2>交易所 Exchange <span class="sub">直接下单，大单滑点严重</span></h2>
+    <div class="exbody">
+      <div class="form" style="padding:0;border:0">
+        <label>股票 Ticker<select id="exTicker"></select></label>
+        <label>数量 Quantity<input id="exQty" type="number" min="1" step="1000" value="10000" inputmode="numeric"></label>
+      </div>
+      <div class="quick" id="exQuick"></div>
+      <div class="exprices">
+        <button id="exSell" style="background:var(--offer)">卖出 SELL<small>均价</small></button>
+        <button id="exBuy" style="background:var(--bid)">买入 BUY<small>均价</small></button>
+      </div>
+      <div class="kv"><span>名义金额 Notional</span><b id="exNotional">-</b></div>
+      <div class="kv"><span>佣金 Commission（0.5%）</span><b id="exComm">-</b></div>
+      <div class="kv"><span>相对参考价的滑点</span><b id="exSlip">-</b></div>
+      <p class="hint">下面是订单簿最前面 5 档。数量越大，越要吃到后面更差的价格。</p>
+      <div class="scroll"><table class="depth"><thead><tr><th>买单量</th><th>买价 Bid</th><th>卖价 Offer</th><th>卖单量</th></tr></thead><tbody id="depthBody"></tbody></table></div>
+    </div>
+  </section>
+
+  <section class="card" id="chartc"><h2><span id="chartTitle">价格</span><span class="tabs" id="chartTabs"><button aria-pressed="true" data-cv="px">价格</button><button aria-pressed="false" data-cv="bm">组合 vs 基准</button></span></h2>
+    <div class="chartwrap"><canvas id="cv"></canvas></div>
+    <div class="status" id="chartStatus"></div>
+  </section>
+</main>
+
+<div class="overlay" id="startOv">
+  <div class="modal" role="dialog" aria-labelledby="stTitle">
+    <h1 id="stTitle">开始一局练习</h1>
+    <p>按照 CFA Institute × AmplifyME Investing Simulator Challenge 的界面和规则搭建的练习版。价格走势、客户行为和佣金都是模拟估计，不是官方计分。</p>
+    <div class="roles">
+      <label><input type="radio" name="role" value="AM" checked><b>资产管理（AM）</b>
+        <p>管理 2000 万美元只做多基金，五只股票，开局每只 5%。目标：每只保持 10% 至 30%，总仓位 90% 以上，单只亏损不超过 50 万美元，跑赢等权基准。大单向两家银行询价。</p></label>
+      <label><input type="radio" name="role" value="IB"><b>投资银行（IB）</b>
+        <p>客户会在聊天里询价，只说数量不说方向。你报出买价和卖价，客户选择是否成交。成交后你持有风险，要在交易所分批平仓。目标：多成交、零胖手指、头寸尽快归零。</p></label>
+    </div>
+    <div class="lens modes" style="display:block"><b>资产</b>
+      <label><input type="radio" name="set" value="comp" checked> 比赛同款 <small>RDS、SIE、EDF、TSLA、NVDA，用比赛里出现过的真实新闻；客户偏好 ESG；3 家银行报价，有的很宽，偶尔有人报错价</small></label>
+      <label><input type="radio" name="set" value="practice"> 练习版 <small>BABA、MSFT、VW、HSBC、BP（情景训练固定使用这一组）</small></label>
+    </div>
+    <div class="lens"><b>时长</b>
+      <label><input type="radio" name="len" value="5" checked> 5 分钟</label>
+      <label><input type="radio" name="len" value="10"> 10 分钟</label>
+      <label><input type="radio" name="len" value="15"> 15 分钟</label>
+      <label><input type="radio" name="len" value="20"> 20 分钟</label>
+    </div>
+    <div class="lens modes" style="display:block"><b>模式</b>
+      <label><input type="radio" name="mode" value="tut" checked> 情景训练 <small>时间暂停，把比赛里会遇到的每种情况一个一个练</small></label>
+      <label><input type="radio" name="mode" value="easy"> 轻松 <small>价格变动慢一半，客户更有耐心，来询价时自动暂停</small></label>
+      <label><input type="radio" name="mode" value="std"> 标准 <small>接近比赛节奏</small></label>
+    </div>
+    <button class="btn primary" id="startBtn">开始</button>
+  </div>
+</div>
+
+<div class="overlay" id="rulesOv" hidden>
+  <div class="modal" role="dialog" aria-labelledby="ruTitle">
+    <h1 id="ruTitle">本局规则</h1>
+    <div id="rulesBody"></div>
+    <p style="margin-top:14px"><button class="btn primary" id="rulesClose">回到交易</button></p>
+  </div>
+</div>
+
+<div class="overlay" id="endOv" hidden>
+  <div class="modal" role="dialog" aria-labelledby="enTitle">
+    <h1 id="enTitle">本局复盘</h1>
+    <div id="endBody"></div>
+    <p style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="againBtn">再来一局</button><button class="btn" id="viewBtn">查看本局盘面</button></p>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+<div class="coach" id="coach" hidden role="dialog" aria-live="polite">
+  <div class="stepn" id="coachN"></div>
+  <h3 id="coachT"></h3>
+  <div class="cb" id="coachB"></div>
+  <div class="row"><button class="btn" id="coachSkip">退出引导</button><button class="btn primary" id="coachNext">下一步</button></div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const STOCKS_PRACTICE = [
+  {t:'BABA', p0:482.0}, {t:'MSFT', p0:404.4}, {t:'VW', p0:38.66}, {t:'HSBC', p0:50.64}, {t:'BP', p0:40.10}
+];
+const TICK_MS = 500, SIGMA = 0.0011, EX_COMM = 0.005, IB_COMM = 0.001, LEVEL_NOTIONAL = 300000;
+const NEWS_PRACTICE = [
+  [0.02,'MACRO','Central bank signals interest rate cuts are on the table','央行暗示可能降息',0.02],
+  [0.07,'BABA','Alibaba wows the market with the launch of a new smartphone','阿里巴巴发布新手机，市场惊艳',0.06],
+  [0.13,'HSBC','UK Government announces a one-off tax on bank profits','英国政府宣布对银行利润征收一次性税',-0.07],
+  [0.19,'VW','VW announces delays in the development of its all-electric SUV','大众纯电 SUV 研发推迟',-0.06],
+  [0.26,'MSFT','Microsoft reports much better than expected quarterly earnings','微软季度业绩远超预期',0.07],
+  [0.32,'BP','Oil prices surge as BP raises full-year profit guidance','油价飙升，BP 上调全年利润指引',0.08],
+  [0.39,'MACRO','Government announces a record economic stimulus package','政府宣布创纪录的经济刺激计划',0.03],
+  [0.46,'HSBC','HSBC CEO resigns; regulator opens money-laundering enquiry','汇丰 CEO 辞职，监管机构启动反洗钱调查',-0.10],
+  [0.50,'NOTE','We are now half way through the round','本局已过半',0],
+  [0.53,'VW','VW names new battery supplier as reviewers give new SUV five stars','大众宣布新电池供应商，新车获五星评测',0.09],
+  [0.60,'BABA','Regulators launch an antitrust review of e-commerce platforms','监管机构对电商平台展开反垄断审查',-0.08],
+  [0.66,'MSFT','Microsoft in final stages of a major acquisition','微软大型收购进入最后阶段',0.04],
+  [0.73,'BP','Offshore platform incident halts BP production','海上平台事故，BP 停产',-0.09],
+  [0.80,'MACRO','Inflation comes in above forecasts as rate hike fears grow','通胀高于预期，加息担忧升温',-0.03],
+  [0.86,'HSBC','HSBC announces a large share buyback','汇丰宣布大规模股票回购',0.05],
+  [0.92,'VW','VW raises electric vehicle delivery targets','大众上调电动车交付目标',0.04]
+];
+const STOCKS_COMP = [
+  {t:'RDS', p0:50.80}, {t:'SIE', p0:149.85}, {t:'EDF', p0:82.04}, {t:'TSLA', p0:1001.2}, {t:'NVDA', p0:152.42}
+];
+const NEWS_COMP = [
+  [0.02,'NOTE','Asset Managers: make sure you are executing your large block trades through the Investment Banks','资管：大单请通过投行执行',0],
+  [0.05,'TSLA','Tesla wins approval for first European gigafactory','特斯拉获批建设第一座欧洲超级工厂',0.06],
+  [0.10,'MACRO','Supply chain bottlenecks limit the import of key electric car components','供应链瓶颈限制电动车关键零部件进口',-0.02],
+  [0.15,'EDF','EDF reports heightened levels of radiation close to its Hinkley Point nuclear plant','EDF 报告 Hinkley Point 核电站附近辐射升高',-0.08],
+  [0.20,'NVDA','Nvidia announces plans to build a powerful AI supercomputer designed to tackle climate change','英伟达计划建造应对气候变化的 AI 超级计算机',0.07],
+  [0.25,'MACRO','The EU launches a European Chip Act','欧盟推出《欧洲芯片法案》',0.02],
+  [0.30,'RDS','Oil and gas groups keep drilling despite green energy push','油气公司不顾绿色转型继续钻探',-0.03],
+  [0.35,'EDF','The French state plans to take full ownership of EDF, from their current 84% stake','法国政府计划全资收购 EDF（目前持股 84%）',0.09],
+  [0.40,'SIE','Siemens subsidiary cuts profit guidance by 7% after larger-than-forecast loss','西门子子公司亏损超预期，下调利润指引 7%',-0.07],
+  [0.45,'MACRO','The US orders a record oil release of 180mn barrels from strategic reserves','美国宣布创纪录释放 1.8 亿桶战略石油储备',-0.02],
+  [0.50,'NOTE','We are now half way through the round','本局已过半',0],
+  [0.53,'MACRO','The US Federal Reserve announces a 50bps interest rate hike','美联储宣布加息 50 个基点',-0.03],
+  [0.57,'NVDA','ESG rating agencies upgrade Nvidia\'s rating after major investment into semiconductor recycling','ESG 评级机构上调英伟达评级（半导体回收投资）',0.06],
+  [0.61,'TSLA','Elon Musk\'s attempted Twitter acquisition stumbles, causing concern for Tesla shareholders','马斯克收购推特受挫，特斯拉股东担忧',-0.07],
+  [0.66,'RDS','A Shell oil tanker sinks, spilling over 20k tons of crude oil into the Mediterranean Sea','Shell 油轮沉没，2 万多吨原油泄漏进地中海',-0.10],
+  [0.71,'EDF','EDF announces plans to build 20 new nuclear reactors by 2050','EDF 计划到 2050 年新建 20 座核反应堆',0.05],
+  [0.76,'SIE','A Siemens subsidiary is to donate heart monitors and imaging equipment to Ukraine','西门子子公司向乌克兰捐赠心脏监护仪和影像设备',0.03],
+  [0.81,'MACRO','US President Biden\'s landmark climate bill achieves surprise Senate approval','拜登的气候法案意外获参议院通过',0.03],
+  [0.86,'RDS','Shell announce the appointment of three new female directors','Shell 任命三位女性董事',0.02],
+  [0.92,'TSLA','Tesla brings forward Net Zero commitment from 2040 to 2030','特斯拉将净零承诺从 2040 年提前到 2030 年',0.05]
+];
+let STOCKS = STOCKS_COMP, NEWS = NEWS_COMP;
+const CLIENTS_PRACTICE = ['HF1','HF2','AM1','AM2'], CLIENTS_COMP = ['AM-8','AM-9','AM-17','AM-21','AM-23','AM-26'];
+const BANKS_PRACTICE = ['IB1','IB2'], BANKS_COMP = ['IB-4','IB-17','IB-28'];
+let CLIENTS = CLIENTS_COMP, BANKS = BANKS_COMP;
+
+let S = null, timer = null, speed = 1, sel = 'EDF', posView = 'pos', chartView = 'px';
+
+/* ---------- 工具 ---------- */
+function gauss(){ let u=0,v=0; while(!u) u=Math.random(); while(!v) v=Math.random(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+const fmt = (x,d=0) => Number(x).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fp = x => x >= 100 ? x.toFixed(2) : x.toFixed(3);
+const money = x => (x < 0 ? '−$' : '$') + fmt(Math.abs(x));
+const pct = (x,d=2) => (x*100).toFixed(d) + '%';
+const cls = x => x > 0.5 ? 'pos' : (x < -0.5 ? 'neg' : '');
+const r2 = x => Math.round(x*100)/100;
+const clockOf = tick => { const s = Math.max(0, Math.round(tick*((S && S.tr) || TICK_MS)/1000)); return String(Math.floor(s/60)).padStart(2,'0') + ':' + String(s%60).padStart(2,'0'); };
+let toastT = null;
+function note(sev, title, detail, tip){ if(!S || S.tut) return; S.log.push({time:clockOf(S.tick), sev, title, detail, tip}); }
+function secsT(sec){ return Math.round(sec*1000/S.tr); }
+function toast(t){ const el=$('#toast'); el.textContent=t; el.hidden=false; clearTimeout(toastT); toastT=setTimeout(()=>el.hidden=true, 2600); }
+
+/* ---------- 状态 ---------- */
+function newState(role, minutes, relaxed){
+  const tr = TICK_MS*(relaxed ? 2 : 1);
+  const T = Math.round(minutes*60000/tr);
+  const st = {role, minutes, T, tick:0, px:{}, open:{}, prev:{}, hist:{}, drifts:[], news:[], queue:[], events:[], chat:[], chatDirty:true,
+    pos:{}, blotter:[], quotes:[], qid:0, pending:false, rfq:null, nextRfq:16, over:false, paused:false, pvHist:[], bmHist:[],
+    tr, log:[], hold:{}, wasIn:{}, watch:[], firstInv:null, invOk:false, flags:{}, stats:{bestPick:0, worsePick:0, invTicks:0, rangeTicks:0, slipW:0, slipN:0, feePaid:0, breaches:0, rfqs:0, done:0, missed:0, rejected:0, ffc:0, comm:0, exFee:0, expSum:0, expMax:0, trades:0}};
+  STOCKS.forEach(s => { const p = s.p0*(1+(Math.random()-0.5)*0.02); st.px[s.t]=p; st.open[s.t]=p; st.prev[s.t]=p; st.hist[s.t]=[p]; st.pos[s.t]={qty:0,avg:0,real:0,flag:false}; });
+  NEWS.forEach((n, i) => { if(minutes <= 5 && n[1] !== 'NOTE' && i % 2) return; const jit = n[1]==='NOTE' ? 0 : (Math.random()-0.5)*0.03; st.queue.push({at:Math.max(2,Math.round((n[0]+jit)*T)), t:n[1], en:n[2], zh:n[3], imp:n[4]*(0.8+Math.random()*0.4)}); });
+  st.queue.push({at:T-Math.round(60000/tr), t:'NOTE', en:'There is one minute left in the round', zh:'还剩一分钟', imp:0});
+  st.queue.sort((a,b)=>a.at-b.at);
+  if(role === 'AM'){
+    st.cash = 20e6;
+    STOCKS.forEach(s => { const p=st.px[s.t]; const q=Math.floor(1e6/p); st.pos[s.t].qty=q; st.pos[s.t].avg=p; st.cash -= q*p; });
+  }
+  return st;
+}
+function applyFill(p, q, price){
+  if(p.qty === 0 || Math.sign(p.qty) === Math.sign(q)){
+    const nq = p.qty + q; p.avg = (p.avg*p.qty + price*q)/nq; p.qty = nq;
+  } else {
+    const closing = Math.min(Math.abs(q), Math.abs(p.qty));
+    p.real += closing*(price - p.avg)*Math.sign(p.qty);
+    const nq = p.qty + q;
+    if(nq === 0){ p.qty = 0; p.avg = 0; }
+    else if(Math.sign(nq) === Math.sign(p.qty)) p.qty = nq;
+    else { p.qty = nq; p.avg = price; }
+  }
+}
+function later(ticks, fn){ if(S.tut){ const st=S; setTimeout(()=>{ if(S===st && !S.over){ fn(); render(); tutCheck(); } }, Math.max(600, ticks*300)); return; } S.events.push({at:S.tick+ticks, fn}); }
+function zhOf(t){
+  let m;
+  if((m = t.match(/make me a price for ([\d,]+) (\w+)/i))) return `请给我 ${m[1]} 股 ${m[2]} 报个价`;
+  if((m = t.match(/Two-way in ([\d,]+) (\w+)/i))) return `请给 ${m[1]} 股 ${m[2]} 一个双边报价`;
+  if((m = t.match(/Can I get a price for ([\d,]+) (\w+)/i))) return `能给我 ${m[1]} 股 ${m[2]} 报个价吗？`;
+  if((m = t.match(/^Hello, ([\d,]+) (\w+) Plz/i))) return `你好，请给 ${m[1]} 股 ${m[2]} 报个价`;
+  if((m = t.match(/make me price for ([\d.]+)K of (\w+)/i))) return `请给 ${m[1]}k 股 ${m[2]} 报个价`;
+  if((m = t.match(/^([\d.]+)k (\w+) pleaase/i))) return `请给 ${m[1]}k 股 ${m[2].toUpperCase()} 报个价`;
+  if((m = t.match(/^(\w+) ([\d.]+) \/ ([\d.]+) for ([\d,]+), valid (.+)$/))) return `${m[1]}：买价 ${m[2]} / 卖价 ${m[3]}，数量 ${m[4]}`;
+  if((m = t.match(/^(\w+) ([\d.]+) \/ ([\d.]+), ([\d,]+) x ([\d,]+), valid (\d+)s$/))) return `${m[1]}：我 ${m[2]} 买、${m[3]} 卖，各 ${m[4]} 股，${m[6]} 秒有效`;
+  if((m = t.match(/^Done\. You (buy|sell) ([\d,]+) (\w+) at ([\d.]+)\./))) return `成交：你以 ${m[4]} ${m[1]==='buy'?'买入':'卖出'} ${m[2]} 股 ${m[3]}`;
+  if((m = t.match(/^Sorry, I asked for (\w+)\./))) return `不好意思，我问的是 ${m[1]}。`;
+  const d = {'Mine, thanks!':'我买，谢谢！（按你的卖价买入）','Yours, thanks!':'卖给你，谢谢！（按你的买价卖出）','Mine, thanks':'我买，谢谢（按卖价买入）','Yours, thanks':'卖给你，谢谢（按买价卖出）',
+    'No worries, I’ll go elsewhere.':'没关系，我去找别家了。（你回复太慢）','Too wide for me, I’ll pass.':'价差太宽了，这笔不做了。','I need the full size, thanks.':'我需要全部数量，谢谢。',
+    'Quote expired, thanks anyway.':'报价过期了，还是谢谢。','Sorry, which stock and how many shares?':'请问是哪只股票、多少股？'};
+  return d[t] || '';
+}
+function say(who, text, kind){ S.chat.push({who, text, zh: /[A-Za-z]/.test(text) && !/[\u4e00-\u9fff]/.test(text) ? zhOf(text) : '', kind:kind||'them', time:clockOf(S.tick)}); S.chatDirty = true; }
+function blot(venue, side, q, t, price){ S.blotter.unshift({time:clockOf(S.tick), venue, side, q, t, price}); S.stats.trades++; }
+
+/* ---------- 交易所订单簿 ---------- */
+function safeClip(t, maxQ){ const q = Math.max(100, Math.floor(300000/S.px[t]/100)*100); return maxQ ? Math.min(q, maxQ) : q; }
+function lvlOff(i){ return Math.min(0.45, 0.0006 + 0.004*Math.pow(i,1.55)); }
+function perLevel(t){ return Math.max(1, Math.round(LEVEL_NOTIONAL/S.px[t]/100)*100); }
+function exAvg(t, qty, side){
+  if(!(qty > 0)) return S.px[t];
+  const ref = S.px[t], per = perLevel(t); let rem = qty, cost = 0, i = 0;
+  while(rem > 0){
+    const o = i < 30 ? lvlOff(i) : 0.5;
+    const pr = side === 'buy' ? ref*(1+o) : ref*(1-o);
+    const q = Math.min(rem, per); cost += q*pr; rem -= q; i++;
+  }
+  return cost/qty;
+}
+
+/* ---------- 估值 ---------- */
+function amVals(){
+  let shares=0, unreal=0, real=0;
+  STOCKS.forEach(s => { const p=S.pos[s.t], px=S.px[s.t]; shares += p.qty*px; unreal += p.qty*(px-p.avg); real += p.real; });
+  const pv = shares + S.cash;
+  return {shares, unreal, real, pv, inv: shares/pv, total: pv - 20e6};
+}
+function benchValue(){ return STOCKS.reduce((a,s)=>a + 0.2*20e6*S.px[s.t]/S.open[s.t], 0); }
+function weight(t, v){ return S.pos[t].qty*S.px[t]/v.pv; }
+function ibVals(){
+  let unreal=0, real=0, exp=0;
+  STOCKS.forEach(s => { const p=S.pos[s.t], px=S.px[s.t]; unreal += p.qty*(px-p.avg); real += p.real; exp += Math.abs(p.qty*px); });
+  return {unreal, real, exp, comm:S.stats.comm, fee:S.stats.exFee, total: unreal + real + S.stats.comm - S.stats.exFee};
+}
+
+/* ---------- 主循环 ---------- */
+function fire(n){
+  S.news.unshift({...n, time:clockOf(S.tick), born:S.tick});
+  if(n.imp){
+    const targets = n.t === 'MACRO' ? STOCKS.map(s=>s.t) : [n.t];
+    if(S.role === 'IB') targets.forEach(t => { const q = S.pos[t].qty; if(q){ const chg = q*S.px[t]*n.imp*0.35; note(chg < 0 ? 'bad' : 'warn', '持仓时遇到新闻', `${t}：${n.zh}。你当时${q>0?'多头':'空头'} ${fmt(Math.abs(q))} 股，这条新闻一出来就让你${chg<0?'亏':'赚'}了约 ${money(Math.abs(chg))}（这次${chg<0?'运气不好':'运气好'}）`, '投行不赌方向。接单后马上分批平仓，头寸放得越久，越容易撞上新闻。'); } });
+    if(S.role === 'AM' && n.t !== 'MACRO') S.watch.push({t:n.t, sign:Math.sign(n.imp), at:S.tick, zh:n.zh, done:false});
+    targets.forEach(t => { S.px[t] *= (1 + n.imp*0.35); S.drifts.push({t, per:Math.log(1+n.imp*0.65)/40, left:40}); });
+  }
+}
+function step(){
+  if(!S || S.paused || S.over) return;
+  S.tick++;
+  while(S.queue.length && S.queue[0].at <= S.tick) fire(S.queue.shift());
+  STOCKS.forEach(s => {
+    S.prev[s.t] = S.px[s.t];
+    let d = gauss()*SIGMA;
+    S.drifts.forEach(dr => { if(dr.t === s.t) d += dr.per; });
+    S.px[s.t] *= Math.exp(d);
+    S.hist[s.t].push(S.px[s.t]);
+  });
+  S.drifts.forEach(dr => dr.left--); S.drifts = S.drifts.filter(dr => dr.left > 0);
+  const due = S.events.filter(e => e.at <= S.tick); S.events = S.events.filter(e => e.at > S.tick); due.forEach(e => e.fn());
+  S.quotes = S.quotes.filter(q => q.exp > S.tick);
+  if(S.role === 'AM') amTick(); else ibTick();
+  render();
+  if(S.tick >= S.T) endRound();
+}
+function amTick(){
+  const v = amVals();
+  if(v.inv >= 0.9) S.stats.invTicks++;
+  if(v.inv >= 0.9 && S.firstInv === null) S.firstInv = S.tick;
+  if(v.inv >= 0.9) S.invOk = true; else if(S.invOk){ S.invOk = false; note('bad', '投资比例掉到 90% 以下', `当时只有 ${pct(v.inv,1)}，现金太多`, '卖出一只之后，要马上把钱买进另一只股票。卖和买要成对出现。'); }
+  STOCKS.forEach(s => { const w = weight(s.t, v), inR = w >= 0.0995 && w <= 0.3005;
+    if(inR) S.wasIn[s.t] = true;
+    else if(S.wasIn[s.t]){ S.wasIn[s.t] = false; note('bad', `${s.t} 跑出了 10%–30% 区间`, `${s.t} 当时占 ${pct(w,1)}`, w > 0.3 ? '股票涨多了，权重会自动变大。每隔几分钟看一眼“占组合”，超过 30% 就卖一点，再把钱买进别的。' : '至少保持在 10% 以上：减仓不要减过头；别的股票大涨也会把它“挤”到 10% 以下。'); } });
+  if(STOCKS.every(s => { const w = weight(s.t, v); return w >= 0.0995 && w <= 0.3005; })) S.stats.rangeTicks++;
+  STOCKS.forEach(s => {
+    const p = S.pos[s.t], u = p.qty*(S.px[s.t]-p.avg);
+    if(u < -500000 && !p.flag){ p.flag = true; S.stats.breaches++; note('bad', `${s.t} 突破了 50 万止损`, `浮亏 ${money(u)}`, '浮亏到 30 至 40 万时就开始减仓，不要等到线上。规则优先于“它会反弹”的感觉。'); say('系统', `${s.t} 浮亏 ${money(u)}，已突破 50 万美元止损。真实比赛会扣 BSRM 分，应立即减仓。`, 'sys alert'); }
+    else if(p.flag && u > -400000) p.flag = false;
+    else if(!p.flag && u < -380000 && !p.warned){ p.warned = true; note('warn', `${s.t} 接近止损线`, `浮亏 ${money(u)}`, '到了 30 至 40 万就该减一部分。'); say('系统', `${s.t} 浮亏接近止损线（${money(u)}），考虑减仓。`, 'sys alert'); }
+    if(u > -300000) p.warned = false;
+  });
+  S.pvHist.push(v.pv); S.bmHist.push(benchValue());
+}
+function ibTick(){
+  const v = ibVals();
+  S.stats.expSum += v.exp; S.stats.expMax = Math.max(S.stats.expMax, v.exp);
+  STOCKS.forEach(s => { const q = S.pos[s.t].qty; if(q){ S.hold[s.t] = (S.hold[s.t]||0) + 1; if(S.hold[s.t] === secsT(45)) note('warn', '头寸放得太久', `${s.t} 的${q>0?'多头':'空头'} ${fmt(Math.abs(q))} 股超过 45 秒还没平掉`, '成交后马上去交易所，用“安全一笔”连续点，几十秒内平完。'); } else S.hold[s.t] = 0; });
+  if(!S.rfq && S.tick >= S.nextRfq && S.tick < S.T - 30) newRfq();
+  if(S.rfq && S.rfq.status === 'open' && S.tick > S.rfq.deadline){
+    S.stats.missed++; note('bad', '错过了一次询价', `${S.rfq.client} 问 ${fmt(S.rfq.q)} 股 ${S.rfq.t}，你没在时限内报价，客户走了`, '客户只会等一小会儿。先点“建议报价”，四项核对后马上发送，熟练之后再自己调价。'); say(S.rfq.client, 'No worries, I’ll go elsewhere.'); closeRfq();
+  }
+}
+
+/* ---------- AM：向银行询价 ---------- */
+function amRequest(t, q){
+  if(S.over) return;
+  if(!(q > 0)) return toast('请输入数量');
+  if(S.pending) return toast('银行还在报价，请稍等');
+  say('你', `Could you make me a price for ${fmt(q)} ${t} please?`, 'you');
+  S.pending = true;
+  const req = ++S.qid;
+  const oddBank = S.comp && Math.random() < 0.18 ? Math.floor(Math.random()*BANKS.length) : -1;
+  BANKS.forEach((bank, i) => later(3 + i*2 + Math.floor(Math.random()*3), () => {
+    const ref = S.px[t], notional = q*ref;
+    let half = Math.min(0.015, 0.003 + 0.0015*notional/1e6) * (0.75 + Math.random()*0.6);
+    let skew = (Math.random()-0.5)*0.004;
+    if(S.comp && Math.random() < 0.4) half = 0.02 + Math.random()*0.02;
+    if(i === oddBank){ half = 0.006; skew = (Math.random() < 0.5 ? -1 : 1)*(0.04 + Math.random()*0.04); }
+    const qt = {id:++S.qid, req, bank, t, q, bid:r2(ref*(1-half+skew)), offer:r2(ref*(1+half+skew)), exp:S.tick+(S.tut?1e6:(S.relaxed?160:60))};
+    S.quotes.push(qt);
+    say(bank, `${t} ${fp(qt.bid)} / ${fp(qt.offer)} for ${fmt(q)}, valid ${S.tut?'until you decide':(S.relaxed?'80s':'30s')}`);
+    if(i === BANKS.length - 1) S.pending = false;
+  }));
+}
+function amHit(id, side){
+  const qt = S.quotes.find(x => x.id === id);
+  if(!qt || qt.exp <= S.tick) return toast('报价已过期，请重新询价');
+  const p = S.pos[qt.t], price = side === 'buy' ? qt.offer : qt.bid, notional = qt.q*price, fee = notional*IB_COMM;
+  if(side === 'buy' && S.cash < notional + fee) return toast(`现金不足：最多约可买 ${fmt(Math.floor(S.cash/(price*(1+IB_COMM))))} 股`);
+  if(side === 'sell' && p.qty < qt.q) return toast(`只做多基金不能卖空：你只持有 ${fmt(p.qty)} 股 ${qt.t}`);
+  const ref = S.px[qt.t];
+  const others = S.quotes.filter(x => x.req === qt.req && x.id !== qt.id && x.exp > S.tick);
+  const other = others.length ? others.reduce((a,b) => side === 'buy' ? (b.offer < a.offer ? b : a) : (b.bid > a.bid ? b : a)) : null;
+  if(other){ const diff = side === 'buy' ? qt.offer - other.offer : other.bid - qt.bid;
+    if(diff > 0.0001){ S.stats.worsePick++; note('warn', '选了报价更差的那家银行', `${side==='buy'?'买入':'卖出'} ${fmt(qt.q)} 股 ${qt.t}：${qt.bank} 的 ${side==='buy'?'offer':'bid'} 是 ${fp(side==='buy'?qt.offer:qt.bid)}，${other.bank} 是 ${fp(side==='buy'?other.offer:other.bid)}，多花了约 ${money(diff*qt.q)}`, '买看 offer，挑最低；卖看 bid，挑最高。'); }
+    else S.stats.bestPick++; }
+  S.watch.forEach(w => { if(w.done || w.t !== qt.t) return; const dir = side === 'buy' ? 1 : -1;
+    if(S.tick - w.at <= secsT(60)){ if(dir === w.sign) w.done = true; else { w.done = true; w.wrong = true; note('warn', '新闻之后操作方向反了', `${qt.t}：${w.zh}。这是${w.sign>0?'利好':'利空'}，你却${side==='buy'?'买入':'卖出'}了`, '利好加仓、利空减仓。下手前先问自己：这条新闻对这只股票是好是坏？'); } } });
+  say('你', side === 'buy' ? 'Mine, thanks' : 'Yours, thanks', 'you');
+  applyFill(p, side === 'buy' ? qt.q : -qt.q, price);
+  S.cash -= (side === 'buy' ? notional : -notional) + fee;
+  S.stats.feePaid += fee;
+  S.stats.slipW += (side === 'buy' ? (price-ref)/ref : (ref-price)/ref)*notional; S.stats.slipN += notional; S.stats.bankN = (S.stats.bankN||0) + notional;
+  blot(qt.bank, side === 'buy' ? '买入' : '卖出', qt.q, qt.t, price);
+  say(qt.bank, `Done. You ${side === 'buy' ? 'buy' : 'sell'} ${fmt(qt.q)} ${qt.t} at ${fp(price)}.`);
+  S.quotes = S.quotes.filter(x => x.req !== qt.req);
+  if(S.tut){ if(side === 'buy') S.tut.f.bought = true; else S.tut.f.sold = true; }
+  render(); tutCheck();
+}
+function parseReq(txt){
+  const st = STOCKS.find(s => new RegExp('\\b' + s.t + '\\b', 'i').test(txt));
+  const m = txt.replace(/,/g,'').match(/(\d+(?:\.\d+)?)\s*(k|m)?\b/i);
+  if(!st || !m) return null;
+  let q = parseFloat(m[1]); if(m[2]) q *= m[2].toLowerCase() === 'k' ? 1000 : 1e6;
+  return {t:st.t, q:Math.round(q)};
+}
+
+/* ---------- IB：客户询价 ---------- */
+function newRfq(forced){
+  const s = forced ? STOCKS.find(x => x.t === forced.t) : STOCKS[Math.floor(Math.random()*STOCKS.length)];
+  const notional = 1e6 + Math.random()*4e6;
+  const q = forced ? forced.q : Math.max(1000, Math.round(notional/S.px[s.t]/1000)*1000);
+  const client = forced ? forced.client : CLIENTS[Math.floor(Math.random()*CLIENTS.length)];
+  S.rfq = {client, t:s.t, q, side: forced ? forced.side : (Math.random() < 0.5 ? 'buy' : 'sell'), tol: forced ? (forced.tol || 0.02) : (S.comp ? 0.006 + Math.random()*0.012 : 0.004 + Math.random()*0.01), deadline: S.tick + (S.tut ? 1e9 : (S.relaxed ? 160 : 50)), status:'open'};
+  S.stats.rfqs++;
+  const lines = S.comp ? [`Hello, ${q} ${s.t} Plz`, `make me price for ${q/1000}K of ${s.t}`, `${q/1000}k ${s.t.toLowerCase()} pleaase`, `Hi, could you make me a price for ${fmt(q)} ${s.t} please?`] : [`Hi, could you make me a price for ${fmt(q)} ${s.t} please?`, `Two-way in ${fmt(q)} ${s.t} please`, `Can I get a price for ${fmt(q)} ${s.t}?`];
+  say(client, lines[Math.floor(Math.random()*lines.length)]);
+  const f = id => document.getElementById(id);
+  if(f('qTicker')){ f('qTicker').value = s.t; f('qBidVol').value = q; f('qOffVol').value = q; f('qBid').value=''; f('qOff').value=''; }
+  if(S.relaxed && !S.paused){ S.paused = true; S.autoPaused = true; $('#pauseBtn').textContent = '继续'; toast('客户来询价了，游戏已自动暂停。填好报价、点发送后会自动继续'); }
+  render();
+}
+function closeRfq(){ S.rfq = null; S.nextRfq = S.tick + (S.relaxed ? 30 + Math.floor(Math.random()*30) : 12 + Math.floor(Math.random()*16)); }
+function suggest(){
+  if(!S.rfq) return toast('现在没有待回复的询价');
+  const t = S.rfq.t, ref = S.px[t], p = S.pos[t];
+  const half = 0.006*ref;
+  const shift = -Math.max(-1, Math.min(1, p.qty*ref/3e6))*0.004*ref;
+  $('#qBid').value = r2(ref - half + shift); $('#qOff').value = r2(ref + half + shift);
+  if(S.tut) { S.tut.f.suggest = true; setTimeout(tutCheck, 50); }
+  toast(p.qty ? `已按参考价 ±0.6% 填入，并因你的${p.qty>0?'多头':'空头'}整体${p.qty>0?'下移':'上移'}` : '已按参考价 ±0.6% 对称填入');
+}
+function sendQuote(){
+  if(S.over) return;
+  const r = S.rfq;
+  if(!r || r.status !== 'open') return toast('现在没有待回复的询价');
+  const t = $('#qTicker').value.trim().toUpperCase();
+  const valid = Math.max(5, Math.min(120, parseInt($('#qValid').value)||30));
+  const bid = parseFloat($('#qBid').value), offer = parseFloat($('#qOff').value);
+  const bv = parseInt($('#qBidVol').value)||0, ov = parseInt($('#qOffVol').value)||0;
+  if(!(bid > 0) || !(offer > 0)) return toast('请填写买价和卖价');
+  if(t !== r.t){ S.stats.ffc++; note('bad', '胖手指：代码填错', `客户问的是 ${r.t}，你填了 ${t}`, '四项核对的第一项就是代码。'); say('系统', `胖手指：客户问的是 ${r.t}，你报了 ${t}。`, 'sys alert'); say(r.client, 'Sorry, I asked for ' + r.t + '.'); return render(); }
+  const ref = S.px[t]; let ff = null;
+  if(bid >= offer) ff = '买价不低于卖价（报反了）';
+  else if(bid > ref*1.01) ff = '买价比参考价高 1% 以上，等于白送钱';
+  else if(offer < ref*0.99) ff = '卖价比参考价低 1% 以上，等于白送钱';
+  else if(bid < ref*0.95 || offer > ref*1.05) ff = '价格偏离参考价超过 5%，很可能是手误';
+  const pq = S.pos[t].qty;
+  if(!ff && pq){ const mid = (bid+offer)/2, good = pq > 0 ? mid < ref : mid > ref;
+    if(good){ if(!S.flags.goodSkew){ S.flags.goodSkew = true; } }
+    else note('warn', '有头寸时没有偏移报价', `你当时${pq>0?'多头':'空头'} ${fmt(Math.abs(pq))} 股 ${t}，但报价的中间价没有往${pq>0?'下':'上'}调`, '多头：两个价一起往下调；空头：两个价一起往上调。让下一笔成交帮你减仓。“建议报价”会自动偏移，可以先看它怎么调。'); }
+  if(ff){ S.stats.ffc++; note('bad', '胖手指', ff + `（参考价 ${fp(ref)}，你报 ${fp(bid)} / ${fp(offer)}）`, '每次发报价前四项核对：代码、买价低于卖价、两价夹住参考价、数量。'); say('系统', '胖手指：' + ff + `（参考价 ${fp(ref)}）`, 'sys alert'); }
+  r.status = 'quoted'; r.quote = {bid, offer, bv, ov, exp: S.tick + valid*2};
+  say('你', `${t} ${fp(bid)} / ${fp(offer)}, ${fmt(bv)} x ${fmt(ov)}, valid ${valid}s`, 'you');
+  later(3 + Math.floor(Math.random()*4), ibDecide);
+  if(S.tut) S.tut.f.sent = true;
+  if(S.autoPaused){ S.paused = false; S.autoPaused = false; $('#pauseBtn').textContent = '暂停'; }
+  render(); tutCheck();
+}
+function ibDecide(){
+  const r = S.rfq; if(!r || r.status !== 'quoted') return;
+  const qd = r.quote;
+  if(S.tick > qd.exp){ say(r.client, 'Quote expired, thanks anyway.'); S.stats.rejected++; return closeRfq(); }
+  const ref = S.px[r.t];
+  let ok, why = 'Too wide for me, I’ll pass.';
+  if(r.side === 'buy'){
+    ok = qd.ov >= r.q && qd.offer <= ref*(1+r.tol) && qd.offer < exAvg(r.t, r.q, 'buy')*(1+EX_COMM);
+    if(qd.ov < r.q) why = 'I need the full size, thanks.';
+  } else {
+    ok = qd.bv >= r.q && qd.bid >= ref*(1-r.tol) && qd.bid > exAvg(r.t, r.q, 'sell')*(1-EX_COMM);
+    if(qd.bv < r.q) why = 'I need the full size, thanks.';
+  }
+  if(ok){
+    const price = r.side === 'buy' ? qd.offer : qd.bid;
+    applyFill(S.pos[r.t], r.side === 'buy' ? -r.q : r.q, price);
+    S.stats.comm += r.q*price*IB_COMM; S.stats.done++;
+    blot(r.client, r.side === 'buy' ? '卖给客户' : '从客户买入', r.q, r.t, price);
+    say(r.client, r.side === 'buy' ? 'Mine, thanks!' : 'Yours, thanks!');
+    const nq = S.pos[r.t].qty;
+    say('系统', `成交：客户${r.side === 'buy' ? '买入，你卖出' : '卖出，你买入'} ${fmt(r.q)} ${r.t} @ ${fp(price)}。你现在${nq>0?'多头':'空头'} ${fmt(Math.abs(nq))} 股，去交易所分批平仓。`, 'sys');
+    sel = r.t; $('#exTicker').value = r.t; $('#exQty').value = safeClip(r.t, Math.abs(nq));
+  } else {
+    S.stats.rejected++;
+    { const d = r.side === 'buy' ? qd.offer/ref - 1 : 1 - qd.bid/ref; const volShort = r.side === 'buy' ? qd.ov < r.q : qd.bv < r.q;
+      note('warn', '报价被客户拒绝', volShort ? `${r.client} 要 ${fmt(r.q)} 股，你给的数量不够` : `${r.client} 其实想${r.side==='buy'?'买':'卖'}。你的${r.side==='buy'?'卖价':'买价'}离参考价 ${pct(d)}，他能接受的大约在 ${pct(r.tol)} 以内`, volShort ? '买量和卖量都要填满客户要的数量。' : '被拒说明报得太宽。先从参考价上下 0.5% 左右起步，被拒就再收窄一点。'); }
+    say(r.client, why);
+    say('系统', `客户本来想${r.side === 'buy' ? '买' : '卖'}。${r.side === 'buy' ? '你的卖价' : '你的买价'}离参考价 ${fp(ref)} 太远，或数量不够。`, 'sys');
+  }
+  if(S.tut){ S.tut.f.decided = true; S.tut.f.accepted = ok; S.rfq = null; S.nextRfq = 1e9; render(); return; }
+  closeRfq(); render();
+}
+
+/* ---------- 交易所下单 ---------- */
+function exTrade(side){
+  if(!S || S.over) return;
+  const t = $('#exTicker').value, q = parseInt($('#exQty').value);
+  if(!(q > 0)) return toast('请输入数量');
+  const price = exAvg(t, q, side), notional = q*price, fee = notional*EX_COMM, ref = S.px[t], p = S.pos[t];
+  if(S.role === 'IB' && !S.tut && p.qty && Math.sign(p.qty) === (side === 'buy' ? 1 : -1)){
+    const key = t + side;
+    if(!(S.confirmAdd && S.confirmAdd.key === key && Date.now() - S.confirmAdd.at < 3000)){
+      S.confirmAdd = {key, at:Date.now()};
+      return toast(`你现在是${p.qty>0?'多头':'空头'}，按“${side==='buy'?'买入':'卖出'}”会让头寸变得更大。平仓应该按“${p.qty>0?'卖出 SELL':'买入 BUY'}”。真的要加仓，请在 3 秒内再点一次`);
+    }
+    S.confirmAdd = null;
+  }
+  if(S.role === 'AM'){
+    if(side === 'buy' && S.cash < notional + fee) return toast('现金不足');
+    if(side === 'sell' && p.qty < q) return toast(`只做多基金不能卖空：你只持有 ${fmt(p.qty)} 股 ${t}`);
+    S.cash -= (side === 'buy' ? notional : -notional) + fee;
+    S.stats.feePaid += fee;
+    S.stats.slipW += (side === 'buy' ? (price-ref)/ref : (ref-price)/ref)*notional; S.stats.slipN += notional; S.stats.exN = (S.stats.exN||0) + notional;
+  } else S.stats.exFee += fee;
+  { const sl = Math.abs(price-ref)/ref; if(!S.tut && (notional > 1.5e6 || sl > 0.01)) note('warn', '在交易所一次做了太大的单', `${side==='buy'?'买入':'卖出'} ${fmt(q)} 股 ${t}，均价 ${fp(price)}，比参考价差了 ${pct(sl)}，多花了约 ${money(Math.abs(price-ref)*q)}`, S.role === 'IB' ? '平仓要分批：用“安全一笔（约 $30 万）”按钮，每次只吃订单簿最前面的好价位。看“相对参考价的滑点”，变红就是太大了。' : '大单找银行询价；交易所只适合小单。');
+    if(S.role === 'AM') S.watch.forEach(w => { if(!w.done && w.t === t && S.tick - w.at <= secsT(60) && (side === 'buy' ? 1 : -1) === w.sign) w.done = true; }); }
+  applyFill(p, side === 'buy' ? q : -q, price);
+  blot('交易所', side === 'buy' ? '买入' : '卖出', q, t, price);
+  toast(`交易所${side === 'buy' ? '买入' : '卖出'} ${fmt(q)} ${t}，均价 ${fp(price)}`);
+  if(S.tut) S.tut.f.ex = true;
+  render(); tutCheck();
+}
+
+/* ---------- 渲染 ---------- */
+function headerHTML(){
+  const m = S.role === 'AM'
+    ? [['shares','持股市值','Value of shares'],['real','已实现盈亏','Realised P&L'],['unreal','未实现盈亏','Unrealised P&L'],['cash','可用现金','Available cash'],['inv','投资比例','% invested'],['total','总盈亏','Total PnL'],['pv','组合总值','Portfolio value'],['alpha','相对基准','vs benchmark']]
+    : [['real','已实现盈亏','Realised P&L'],['unreal','未实现盈亏','Unrealised P&L'],['comm','佣金收入','Commission'],['fee','交易所费用','Exchange fees'],['total','总盈亏','Total P&L'],['exp','风险敞口','Exposure']];
+  const key = S.role === 'AM' ? ['inv','alpha'] : ['exp','comm','total'];
+  $('#metrics').innerHTML = m.map(([k,l,e]) => `<div class="metric ${key.includes(k)?'key':''}"><span>${l} ${e}</span><b id="m-${k}">-</b><i class="gd" id="g-${k}"></i></div>`).join('');
+}
+function setM(k, text, c){ const el = document.getElementById('m-'+k); if(el){ el.textContent = text; el.className = c || ''; } }
+let showGuide = true;
+function setG(k, text, c){ const el = document.getElementById('g-'+k); if(el){ el.textContent = showGuide ? text : ''; el.className = 'gd ' + (c||''); } }
+function renderGuide(){
+  const box = $('#alerts'); const A = [];
+  if(S.role === 'AM'){
+    const v = amVals(), bm = benchValue(), alpha = v.pv/20e6 - bm/20e6;
+    let worst = 'ok'; STOCKS.forEach(s => { const u = S.pos[s.t].qty*(S.px[s.t]-S.pos[s.t].avg); if(u < -380000) worst = 'bad'; else if(u < -250000 && worst !== 'bad') worst = 'mid'; });
+    setG('shares','', ''); setG('real','卖出时锁定的盈亏',''); setG('unreal','单只不能低于 −50 万', worst);
+    setG('cash','≤ 组合的 10%', S.cash/v.pv <= 0.1 ? 'ok' : 'bad'); setG('inv','必须 ≥ 90%', v.inv >= 0.9 ? 'ok' : 'bad');
+    setG('total','越高越好', v.total >= 0 ? 'ok' : 'bad'); setG('pv','越高越好',''); setG('alpha','> 0 就是跑赢基准', alpha >= 0 ? 'ok' : 'bad');
+    if(v.inv < 0.9) A.push(['red', `投资比例 ${pct(v.inv,1)} 低于 90% → 买入股票，把现金投出去（大单找银行）`]);
+    STOCKS.forEach(s => {
+      const w = weight(s.t, v), u = S.pos[s.t].qty*(S.px[s.t]-S.pos[s.t].avg);
+      if(w < 0.0995) A.push(['red', `${s.t} 只占 ${pct(w,1)}，低于 10% → 买入约 ${fmt(lot((0.12*v.pv - S.pos[s.t].qty*S.px[s.t])/S.px[s.t]))} 股（到约 12%）`]);
+      else if(w > 0.3005) A.push(['red', `${s.t} 占 ${pct(w,1)}，超过 30% → 卖出约 ${fmt(lot((S.pos[s.t].qty*S.px[s.t] - 0.28*v.pv)/S.px[s.t]))} 股（到约 28%），再把钱买进别的`]);
+      if(u < -380000) A.push(['red', `${s.t} 浮亏 ${money(u)}，接近 50 万止损 → 立刻减仓一部分`]);
+      else if(u < -250000) A.push(['amber', `${s.t} 浮亏 ${money(u)}，留意止损线`]);
+    });
+    if(!A.length) A.push(['green','全部合规：每只 10%–30%，投资比例 ≥ 90%。接下来看新闻调仓：利好加到 25%–30%，利空减到 10%–15%']);
+    A.push(['info', `相对基准 ${alpha>=0?'+':''}${pct(alpha)}（${alpha>=0?'跑赢':'落后'}）`]);
+  } else {
+    const v = ibVals();
+    setG('real','越高越好', v.real >= 0 ? 'ok' : 'bad'); setG('unreal','头寸平掉后归 0', Math.abs(v.unreal) < 20000 ? 'ok' : 'mid');
+    setG('comm','越高越好（多成交）', 'ok'); setG('fee','越低越好', v.fee > v.comm ? 'mid' : 'ok');
+    setG('total','越高越好', v.total >= 0 ? 'ok' : 'bad'); setG('exp','越低越好，目标 0', v.exp < 2e5 ? 'ok' : (v.exp < 2e6 ? 'mid' : 'bad'));
+    if(S.rfq && S.rfq.status === 'open') A.push(['red', `${S.rfq.client} 在等你报价：${fmt(S.rfq.q)} 股 ${S.rfq.t} → 填好买价和卖价，核对后发送`]);
+    STOCKS.forEach(s => { const q = S.pos[s.t].qty; if(q){ const n = Math.abs(q*S.px[s.t]); A.push([n > 2e6 ? 'red' : 'amber', `${s.t} 头寸 ${q>0?'+':''}${fmt(q)}（${q>0?'多头':'空头'}）→ 去交易所按“${q>0?'卖出 SELL':'买入 BUY'}”，每笔约 ${fmt(safeClip(s.t, Math.abs(q)))} 股`]); } });
+    if(v.exp > 3e6) A.push(['red', '风险敞口太大：先平仓，再接新单']);
+    if(!A.length) A.push(['green', '一切正常：头寸都是 0，等下一位客户询价']);
+  }
+  box.hidden = !showGuide;
+  box.innerHTML = showGuide ? '<span class="lbl">行动提示</span>' + A.map(([c,t]) => `<span class="al ${c}">${t}</span>`).join('') : '';
+}
+function render(){
+  if(!S) return;
+  $('#clock').textContent = clockOf(S.T - S.tick);
+  if(S.role === 'AM'){
+    const v = amVals(), bm = benchValue(), alpha = v.pv/20e6 - bm/20e6;
+    setM('shares', money(v.shares)); setM('real', money(v.real), cls(v.real)); setM('unreal', money(v.unreal), cls(v.unreal));
+    setM('cash', money(S.cash)); setM('inv', pct(v.inv,1), v.inv >= 0.9 ? 'pos' : 'wrn'); setM('total', money(v.total), cls(v.total));
+    setM('pv', money(v.pv)); setM('alpha', (alpha>=0?'+':'') + pct(alpha), cls(alpha*1e6));
+  } else {
+    const v = ibVals();
+    setM('real', money(v.real), cls(v.real)); setM('unreal', money(v.unreal), cls(v.unreal)); setM('comm', money(v.comm), 'pos');
+    setM('fee', money(-v.fee), v.fee ? 'neg' : ''); setM('total', money(v.total), cls(v.total)); setM('exp', money(v.exp), v.exp > 3e6 ? 'neg' : (v.exp > 1e6 ? 'wrn' : ''));
+  }
+  renderGuide(); renderEq(); renderNews(); renderPos(); renderChat(); renderSide(); renderEx(); drawChart();
+}
+function spark(arr){
+  const a = arr.slice(-120), mn = Math.min(...a), mx = Math.max(...a), w = 70, h = 18;
+  const pts = a.map((y,i) => `${(i/(a.length-1||1)*w).toFixed(1)},${(h - (y-mn)/((mx-mn)||1)*h).toFixed(1)}`).join(' ');
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-hidden="true"><polyline points="${pts}" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>`;
+}
+function renderEq(){
+  $('#eqBody').innerHTML = STOCKS.map(s => {
+    const px = S.px[s.t], ch = px/S.open[s.t]-1, up = px >= S.prev[s.t];
+    return `<tr class="click ${s.t===sel?'sel':''}" data-t="${s.t}"><td><b>${s.t}</b></td><td class="${up?'pos':'neg'}">$${fp(px)} ${up?'↑':'↓'}</td><td class="${ch>=0?'pos':'neg'}">${(ch>=0?'+':'')+pct(ch)}</td><td class="${ch>=0?'pos':'neg'}">${spark(S.hist[s.t])}</td></tr>`;
+  }).join('');
+}
+function renderNews(){
+  $('#newsBody').innerHTML = S.news.length ? S.news.map(n => `<div class="newsitem ${S.tick - n.born < 20 ? 'fresh' : ''}"><span class="tk">${n.t}</span><span>${n.en}</span><span class="zh">${n.zh}　已用时 ${n.time}</span></div>`).join('')
+    : '<p class="hint" style="padding:12px">新闻会陆续出现。每条先判断：影响哪只股票？利好还是利空？</p>';
+}
+function renderPos(){
+  const el = $('#posBody');
+  if(posView === 'blot'){
+    el.innerHTML = S.blotter.length ? `<table><thead><tr><th>时间</th><th>对手方</th><th>方向</th><th>数量</th><th>代码</th><th>价格</th></tr></thead><tbody>${S.blotter.map(b=>`<tr><td>${b.time}</td><td>${b.venue}</td><td>${b.side}</td><td>${fmt(b.q)}</td><td>${b.t}</td><td>${fp(b.price)}</td></tr>`).join('')}</tbody></table>`
+      : '<p class="hint" style="padding:12px">还没有成交。</p>';
+    return;
+  }
+  const v = S.role === 'AM' ? amVals() : null;
+  const rows = STOCKS.map(s => {
+    const p = S.pos[s.t], px = S.px[s.t], val = p.qty*px, u = p.qty*(px-p.avg), net = u + p.real;
+    let extra = '';
+    if(v){
+      const w = weight(s.t, v), out = w < 0.0995 || w > 0.3005;
+      extra = `<td class="${out?'neg':'pos'}">${pct(w,1)}</td><td><div class="wbar" title="区间 10% 至 30%"><div class="band"></div><div class="mk" style="left:calc(${Math.min(100,w/0.5*100)}% - 1px)"></div></div></td>`;
+    }
+    const qCell = !v && p.qty ? `<td class="wrn">${fmt(p.qty)}${showGuide?' → 平仓':''}</td>` : `<td>${fmt(p.qty)}</td>`;
+    const uCell = v && u < -250000 ? `<td class="neg">${money(u)}${showGuide?' ⚠':''}</td>` : `<td class="${cls(u)}">${money(u)}</td>`;
+    return `<tr class="click ${s.t===sel?'sel':''}" data-t="${s.t}"><td><b>${s.t}</b>${p.flag?' <span class="neg">止损</span>':''}</td>${qCell}<td>${p.qty?fp(p.avg):'0'}</td><td>${money(val)}</td>${uCell}<td class="${cls(p.real)}">${money(p.real)}</td><td class="${cls(net)}">${money(net)}</td>${extra}</tr>`;
+  }).join('');
+  el.innerHTML = `<table><thead><tr><th>代码 Security</th><th>净头寸 Net Pos</th><th>均价 Avg Price</th><th>市值 Pos Value</th><th>未实现 Unrealised</th><th>已实现 Realised</th><th>净盈亏 Net P/L</th>${v?'<th>占组合 % of Portfolio</th><th>区间 10%–30%</th>':''}</tr></thead><tbody>${rows}</tbody></table>`;
+}
+function renderChat(){
+  if(!S.chatDirty) return; S.chatDirty = false;
+  const log = $('#chatLog');
+  log.innerHTML = S.chat.map(m => `<div class="msg ${m.kind}"><div class="who">${m.who}　${m.time}</div>${escapeHtml(m.text)}${m.zh ? `<div class="zh">${escapeHtml(m.zh)}</div>` : ''}</div>`).join('');
+  log.scrollTop = log.scrollHeight;
+}
+function escapeHtml(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function buildSide(){
+  const box = $('#chatExtra');
+  if(S.role === 'AM'){
+    $('#chatTitle').innerHTML = '聊天 Chat <span class="sub">向银行询价，IB1、IB2 会同时报价</span>';
+    box.innerHTML = `<div class="quotes" id="quoteList"></div>
+      <div class="form">
+        <label>股票 Ticker<select id="rqT">${STOCKS.map(s=>`<option>${s.t}</option>`).join('')}</select></label>
+        <label>数量 Quantity<input id="rqQ" type="number" min="1000" step="1000" value="50000" inputmode="numeric"></label>
+        <div class="full row"><button class="btn primary" id="rqBtn" style="flex:1">请求报价 Request price</button><button class="btn" id="rqHelp">算一下到 20% 要买多少</button></div>
+      </div>
+      <div class="chatin"><input id="chatIn" placeholder="也可以直接打字：make me a price for 100k BP"><button class="btn" id="chatSend">发送</button></div>`;
+    $('#rqBtn').onclick = () => amRequest($('#rqT').value, parseInt($('#rqQ').value));
+    $('#rqHelp').onclick = () => {
+      const t = $('#rqT').value, v = amVals(), cur = S.pos[t].qty*S.px[t], need = 0.2*v.pv - cur;
+      const q = Math.round(Math.abs(need)/S.px[t]/1000)*1000;
+      $('#rqQ').value = q || 1000;
+      toast(`${t} 现在占 ${pct(cur/v.pv,1)}，到 20% 需要${need>=0?'买入':'卖出'}约 ${fmt(q)} 股`);
+      if(S.tut){ S.tut.f.calc = true; tutCheck(); }
+    };
+    const send = () => { const txt = $('#chatIn').value.trim(); if(!txt) return; const r = parseReq(txt); $('#chatIn').value='';
+      if(r) amRequest(r.t, r.q); else { say('你', txt, 'you'); say(BANKS[0], 'Sorry, which stock and how many shares?'); render(); } };
+    $('#chatSend').onclick = send; $('#chatIn').onkeydown = e => { if(e.key === 'Enter') send(); };
+  } else {
+    $('#chatTitle').innerHTML = '聊天 Chat <span class="sub">客户只说数量，不说方向</span>';
+    box.innerHTML = `<div class="status" id="rfqStatus"></div>
+      <div class="form">
+        <label>代码 Ticker<input id="qTicker" autocomplete="off"></label>
+        <label>有效秒数 Valid for seconds<input id="qValid" type="number" value="30" min="5" max="120"></label>
+        <label>买价 Bid Price<input id="qBid" type="number" step="0.01" inputmode="decimal"></label>
+        <label>卖价 Offer Price<input id="qOff" type="number" step="0.01" inputmode="decimal"></label>
+        <label>买量 Bid Volume<input id="qBidVol" type="number" step="1000" inputmode="numeric"></label>
+        <label>卖量 Offer Volume<input id="qOffVol" type="number" step="1000" inputmode="numeric"></label>
+        <div class="full row"><button class="btn primary" id="qSend" style="flex:1">发送报价 Send Quote</button><button class="btn" id="qSug">建议报价</button></div>
+      </div>`;
+    $('#qSend').onclick = sendQuote; $('#qSug').onclick = suggest;
+  }
+}
+function renderSide(){
+  if(S.role === 'AM'){
+    const el = document.getElementById('quoteList'); if(!el) return;
+    const key = S.quotes.map(q => q.id).join(',') + '|' + S.pending;
+    if(el.dataset.k !== key){
+      el.dataset.k = key;
+      el.innerHTML = S.quotes.length ? S.quotes.map(q => `<div class="qcard"><div><b>${q.bank}</b> ${q.t} × ${fmt(q.q)}<br><small id="ql-${q.id}"></small></div>
+        <button class="btn sell" data-hit="${q.id}" data-side="sell">卖给它 Yours<br>bid ${fp(q.bid)}</button><button class="btn buy" data-hit="${q.id}" data-side="buy">从它买 Mine<br>offer ${fp(q.offer)}</button></div>`).join('')
+        : (S.pending ? '<p class="hint" style="padding:8px 12px">银行正在报价……</p>' : '');
+    }
+    S.quotes.forEach(q => { const sm = document.getElementById('ql-' + q.id); if(sm) sm.textContent = `参考价 ${fp(S.px[q.t])}，` + (q.exp - S.tick > 1e5 ? '引导中不限时' : `剩余 ${Math.ceil((q.exp - S.tick)*S.tr/1000)} 秒`); });
+  } else {
+    const el = document.getElementById('rfqStatus'); if(!el) return;
+    const r = S.rfq;
+    el.innerHTML = !r ? '等待下一位客户询价。趁现在把头寸平掉。'
+      : r.status === 'open' ? `<b>${r.client}</b> 询价 ${fmt(r.q)} ${r.t}，参考价 ${fp(S.px[r.t])}，` + (r.deadline - S.tick > 1e5 ? '引导中不限时' : `剩 ${Math.max(0,Math.ceil((r.deadline-S.tick)*S.tr/1000))} 秒内回复`)
+      : `已报价给 ${r.client}，等待客户决定……`;
+  }
+}
+function renderEx(){
+  const t = $('#exTicker').value, q = parseInt($('#exQty').value), ref = S.px[t];
+  if(q > 0){
+    const sp = exAvg(t, q, 'sell'), bp = exAvg(t, q, 'buy');
+    $('#exSell').innerHTML = `卖出 SELL ${fp(sp)}<small>${fmt(q)} 股的平均价</small>`;
+    $('#exBuy').innerHTML = `买入 BUY ${fp(bp)}<small>${fmt(q)} 股的平均价</small>`;
+    $('#exNotional').textContent = money(q*ref);
+    $('#exComm').textContent = money(q*ref*EX_COMM);
+    const slp = (bp-ref)/ref; $('#exSlip').textContent = `约 ${pct(slp)}` + (slp > 0.003 ? '　太大了，减少数量' : '　✓'); $('#exSlip').className = slp > 0.003 ? 'neg' : 'pos';
+    $('#exSlip').parentElement.style.display = showGuide ? '' : 'none';
+    { const sc = $('#depthBody').closest('.scroll'); sc.style.display = showGuide ? '' : 'none'; if(sc.previousElementSibling) sc.previousElementSibling.style.display = showGuide ? '' : 'none'; }
+  }
+  const per = perLevel(t);
+  $('#depthBody').innerHTML = [0,1,2,3,4].map(i => `<tr><td>${fmt(per)}</td><td class="b">${fp(ref*(1-lvlOff(i)))}</td><td class="o">${fp(ref*(1+lvlOff(i)))}</td><td>${fmt(per)}</td></tr>`).join('');
+  const p = S.pos[t], quick = [];
+  if(S.role === 'IB' && p.qty && showGuide){
+    const clip = safeClip(t, Math.abs(p.qty));
+    quick.push(`<button class="btn" data-q="${clip}">安全一笔（${fmt(clip)} 股，约 $30 万）</button>`);
+    quick.push(`<span class="hint"><b class="${p.qty>0?'neg':'pos'}">你是${p.qty>0?'多头 → 只按“卖出 SELL”':'空头 → 只按“买入 BUY”'}</b>，还剩 ${fmt(Math.abs(p.qty))} 股，大约要点 ${Math.ceil(Math.abs(p.qty)/clip)} 次</span>`);
+  } else {
+    quick.push(...[1000,5000,10000,50000,100000].map(n => `<button class="btn" data-q="${n}">${n>=1000?fmt(n/1000)+'k':n}</button>`));
+  }
+  const html = quick.join('');
+  if($('#exQuick').dataset.h !== html){ $('#exQuick').innerHTML = html; $('#exQuick').dataset.h = html; }
+}
+function css(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+function drawChart(){
+  const cv = $('#cv'), box = cv.parentElement, dpr = window.devicePixelRatio || 1;
+  const W = box.clientWidth, H = box.clientHeight; if(!W || !H) return;
+  if(cv.width !== Math.round(W*dpr) || cv.height !== Math.round(H*dpr)){ cv.width = Math.round(W*dpr); cv.height = Math.round(H*dpr); }
+  const g = cv.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,W,H);
+  const showBm = S.role === 'AM' && chartView === 'bm';
+  const series = showBm ? [[S.pvHist, css('--accent'), '你的组合'], [S.bmHist, css('--muted'), '基准']] : [[S.hist[sel], css('--accent'), sel]];
+  const all = series.flatMap(s => s[0]); if(all.length < 2) return;
+  let mn = Math.min(...all), mx = Math.max(...all); const pad = (mx-mn)*0.08 || mx*0.01; mn -= pad; mx += pad;
+  const L = 8, R = 70, T = 10, B = 22, n = Math.max(...series.map(s => s[0].length)), xs = i => L + i/(Math.max(n-1,1))*(W-L-R), ys = y => T + (1-(y-mn)/(mx-mn))*(H-T-B);
+  g.font = '11px IBM Plex Sans, sans-serif'; g.fillStyle = css('--muted'); g.strokeStyle = css('--line'); g.lineWidth = 1;
+  for(let i=0;i<=4;i++){ const y = mn + (mx-mn)*i/4, yy = ys(y); g.beginPath(); g.moveTo(L,yy); g.lineTo(W-R,yy); g.stroke(); g.fillText(showBm ? '$'+(y/1e6).toFixed(2)+'m' : fp(y), W-R+6, yy+4); }
+  series.forEach(([arr, col]) => { g.strokeStyle = col; g.lineWidth = 1.6; g.beginPath(); arr.forEach((y,i) => { const X = xs(i), Y = ys(y); i ? g.lineTo(X,Y) : g.moveTo(X,Y); }); g.stroke(); });
+  if(!showBm){
+    const p = S.pos[sel];
+    if(p.qty){ const yy = ys(p.avg); g.setLineDash([4,4]); g.strokeStyle = p.qty > 0 ? css('--bid') : css('--offer'); g.beginPath(); g.moveTo(L,yy); g.lineTo(W-R,yy); g.stroke(); g.setLineDash([]); g.fillStyle = g.strokeStyle; g.fillText('你的均价', L+4, yy-4); }
+    S.news.filter(nw => nw.t === sel || nw.t === 'MACRO').forEach(nw => { const X = xs(nw.born); g.fillStyle = css('--warn'); g.fillRect(X-1, H-B+2, 2, 8); });
+  }
+  $('#chartTitle').textContent = showBm ? '组合 vs 基准' : sel + ' 价格';
+  if(showBm){ const a = S.pvHist.at(-1)/20e6-1, b = S.bmHist.at(-1)/20e6-1; $('#chartStatus').innerHTML = `<span style="color:var(--accent)">你的组合 ${pct(a)}</span>　<span>基准 ${pct(b)}</span>　超额收益 <b class="${cls((a-b)*1e6)}">${pct(a-b)}</b>`; }
+  else $('#chartStatus').textContent = '底部黄色小标记是相关新闻出现的时间。' + (S.pos[sel].qty ? '虚线是你的持仓均价。' : '');
+}
+
+/* ---------- 规则与复盘 ---------- */
+function rulesHTML(){
+  if(S.role === 'AM') return `<table>
+    <tr><th>目标</th><th>本模拟器里怎么算</th></tr>
+    <tr><td>跑赢基准（ROI）</td><td>基准是 5 只股票各 20%、开局买入后不动。看右下角“组合 vs 基准”。</td></tr>
+    <tr><td>权重区间</td><td>每只 10% 至 30%。开局每只只有 5%，先建仓。</td></tr>
+    <tr><td>投资比例（RA）</td><td>统计全程有多少时间投资比例 ≥ 90%。</td></tr>
+    <tr><td>止损（BSRM）</td><td>单只股票浮亏超过 50 万美元记一次违规。</td></tr>
+    <tr><td>执行（EXE）</td><td>成交均价相对参考价的滑点。银行报价佣金 0.1%，交易所佣金 0.5% 且大单滑点严重。</td></tr></table>
+    <p>操作：在左下角选股票和数量“请求报价”，两家银行报价后，点“从它买”或“卖给它”。小单可以在交易所直接成交。</p>`;
+  return `<table>
+    <tr><th>目标</th><th>本模拟器里怎么算</th></tr>
+    <tr><td>成交笔数（NUMT）</td><td>客户接受你报价的次数。客户的容忍度每次随机，在参考价 ±0.4% 至 ±1.4% 之间。</td></tr>
+    <tr><td>佣金（COMM）</td><td>每笔客户成交收 0.1% 名义金额。</td></tr>
+    <tr><td>胖手指（FFC）</td><td>报错代码、买卖价报反、比参考价白送 1% 以上，或偏离超过 5%。</td></tr>
+    <tr><td>风险管理（SSRM）</td><td>统计全程平均风险敞口，越低越好。交易所平仓收 0.5% 佣金。</td></tr></table>
+    <p>操作：客户询价后，在左下角填写报价并发送。成交后在交易所用“安全一笔”分批平仓。“建议报价”按钮会按参考价 ±0.6% 并根据头寸偏移帮你填好。</p>`;
+}
+function endRound(){
+  if(!S || S.over) return;
+  S.over = true; clearInterval(timer); hideCoach(); render();
+  const T = Math.max(1, S.tick); let rows = [];
+  if(S.role === 'AM'){
+    const v = amVals(), ret = v.pv/20e6-1, bret = benchValue()/20e6-1, alpha = ret-bret;
+    const slip = S.stats.slipN ? S.stats.slipW/S.stats.slipN*1e4 : 0, inv = S.stats.invTicks/T, rng = S.stats.rangeTicks/T;
+    rows = [
+      ['ROI 回报', `基金 ${pct(ret)}，基准 ${pct(bret)}，超额 ${pct(alpha)}`, alpha >= 0 ? '跑赢了基准。回想是哪几次超配或低配起了作用。' : '没跑赢。看看是不是在利空新闻后没有及时降到 10% 附近，或者利好时没有加到 25% 以上。'],
+      ['EXE 执行', `平均滑点 ${slip.toFixed(1)} 个基点，佣金 ${money(S.stats.feePaid)}；成交额中银行 ${pct((S.stats.bankN||0)/Math.max(1,(S.stats.bankN||0)+(S.stats.exN||0)),0)}、交易所 ${pct((S.stats.exN||0)/Math.max(1,(S.stats.bankN||0)+(S.stats.exN||0)),0)}`, (slip > 50 ? '滑点偏大，大单是不是在交易所做的？' : '价格执行不错。') + ' 真实比赛的执行分很看重“大单通过银行完成”：报价太宽时，可以拿交易所价格和银行谈。'],
+      ['BSRM 止损', `${S.stats.breaches} 次突破`, S.stats.breaches ? '浮亏到 30 至 40 万美元时就应开始减仓。' : '全程守住了止损。'],
+      ['RA 投资比例', `${pct(inv,0)} 的时间 ≥ 90%`, inv < 0.85 ? '开局建仓太慢，或卖出后没有及时买回其他股票。' : '保持得很好。'],
+      ['权重区间', `${pct(rng,0)} 的时间全部在 10% 至 30%`, rng < 0.8 ? '注意股价上涨会让权重自动超过 30%，要定期检查。' : '很守规矩。']
+    ];
+  } else {
+    const v = ibVals(), avgExp = S.stats.expSum/T;
+    rows = [
+      ['NUMT 成交笔数', `${S.stats.done} 笔成交 / ${S.stats.rfqs} 次询价（错过 ${S.stats.missed}，被拒 ${S.stats.rejected}）`, S.stats.rejected > S.stats.done ? '被拒较多，报价可以再窄一点，或者先用“建议报价”找感觉。' : (S.stats.missed ? '有询价没回复，客户等不了太久。' : '接单效率不错。')],
+      ['COMM 佣金', money(S.stats.comm), '成交越多、单子越大，佣金越高。'],
+      ['FFC 胖手指', `${S.stats.ffc} 次`, S.stats.ffc ? '发报价前固定核对：代码、买价低于卖价、两价夹住参考价、数量。' : '零失误，保持。'],
+      ['SSRM 风险管理', `平均敞口 ${money(avgExp)}，最高 ${money(S.stats.expMax)}，结束时 ${money(v.exp)}`, avgExp > 1.5e6 ? '头寸留得太久，成交后应尽快分批平仓。' : '平仓及时。'],
+      ['总盈亏', money(v.total), `已实现 ${money(v.real)}，未实现 ${money(v.unreal)}，佣金 ${money(v.comm)}，交易所费用 ${money(-v.fee)}。`]
+    ];
+  }
+  const goods = [];
+  if(S.role === 'AM'){
+    const v = amVals(), alpha = v.pv/benchValue() - 1;
+    if(S.firstInv !== null){ const sec = Math.round(S.firstInv*S.tr/1000); (sec <= 120 ? goods : null)?.push(`开局 ${sec} 秒就把投资比例做到了 90% 以上`); if(sec > 120) S.log.unshift({time:'开局', sev:'warn', title:'建仓太慢', detail:`用了 ${sec} 秒才把投资比例做到 90%`, tip:'开局先按“每只至少 12%、看好的 25%”快速建仓，再慢慢细调。'}); }
+    else S.log.unshift({time:'全场', sev:'bad', title:'投资比例始终没到 90%', detail:`结束时只有 ${pct(v.inv,1)}`, tip:'开局第一件事：把每只买到 10% 以上、合计 90% 以上。用“算一下到 20% 要买多少”帮你算股数。'});
+    if(!S.stats.breaches) goods.push('全程没有突破止损');
+    if(S.stats.bestPick) goods.push(`${S.stats.bestPick} 次选了报价更好的那家银行`);
+    const resp = S.watch.filter(w => w.done && !w.wrong).length, miss = S.watch.filter(w => !w.done && S.tick - w.at > secsT(60));
+    if(resp) goods.push(`${resp} 条个股新闻出来后 1 分钟内做了正确方向的调整`);
+    miss.forEach(w => S.log.push({time:clockOf(w.at), sev:'warn', title:'新闻出来后没有调整', detail:`${w.t}：${w.zh}（${w.sign>0?'利好':'利空'}）`, tip: w.sign > 0 ? '利好：在 30% 以内加仓这只股票。' : '利空：减到 10% 至 15%，把钱买进别的。'}));
+    if(alpha >= 0) goods.push(`跑赢基准 ${pct(alpha)}`);
+    const attr = STOCKS.map(s => { const w = weight(s.t, v), r = S.px[s.t]/S.open[s.t] - 1; return {t:s.t, w, r, c:(w-0.2)*r}; }).sort((a,b) => b.c - a.c);
+    S.attr = attr;
+  } else {
+    const v = ibVals();
+    if(!S.stats.ffc) goods.push('零胖手指');
+    if(!S.stats.missed && S.stats.rfqs) goods.push('没有错过任何一次询价');
+    if(S.stats.done) goods.push(`成交了 ${S.stats.done} 笔，佣金 ${money(S.stats.comm)}`);
+    if(v.exp < 1e5) goods.push('结束时头寸都平掉了');
+    if(S.flags.goodSkew) goods.push('有头寸时会偏移报价');
+    if(!S.log.some(x => x.title === '在交易所一次做了太大的单') && S.stats.done) goods.push('平仓都是分批做的');
+    if(v.exp >= 1e5) S.log.push({time:'结束', sev:'warn', title:'结束时还有头寸没平', detail:`剩余敞口 ${money(v.exp)}`, tip:'每笔成交后都要平到 0，尤其是最后一分钟。'});
+  }
+  const tk = x => x.time === '开局' || x.time === '全场' ? '00:00' : (x.time === '结束' ? '99:99' : x.time);
+  const bad = S.log.filter(x => x.sev !== 'good').sort((a,b) => tk(a) < tk(b) ? -1 : tk(a) > tk(b) ? 1 : 0);
+  const groups = {}; bad.forEach(x => { const g = groups[x.title] || (groups[x.title] = {n:0, sev:x.sev, tip:x.tip}); g.n++; if(x.sev === 'bad') g.sev = 'bad'; });
+  const top = Object.entries(groups).sort((a,b) => (a[1].sev === 'bad' ? 0 : 1) - (b[1].sev === 'bad' ? 0 : 1) || b[1].n - a[1].n).slice(0,3);
+  const attrHtml = S.attr ? `<h3 style="margin:16px 0 6px;font-size:16px">谁帮你赚、谁拖了后腿（相对基准）</h3><table><tr><th>股票</th><th>你的权重</th><th>基准</th><th>本局涨跌</th><th>相对贡献</th></tr>${S.attr.map(a => `<tr><td>${a.t}</td><td>${pct(a.w,1)}</td><td>20%</td><td class="${a.r>=0?'pos':'neg'}">${(a.r>=0?'+':'')+pct(a.r)}</td><td class="${a.c>=0?'pos':'neg'}">${(a.c>=0?'+':'')+pct(a.c)}</td></tr>`).join('')}</table><p style="font-size:13px;color:var(--muted)">相对贡献 ≈（你的权重 − 20%）× 涨跌幅。超配涨的、低配跌的，贡献为正。</p>` : '';
+  const txt = [`【${S.role==='AM'?'资管':'投行'}｜${S.minutes} 分钟｜${S.mode==='easy'?'轻松':'标准'}模式】`, '成绩：' + rows.map(r => `${r[0]}：${r[1]}`).join('；'), '做得好：' + (goods.join('；') || '无'), '问题：', ...bad.map(x => `${x.time} ${x.title}：${x.detail}`)].join('\n');
+  $('#endBody').innerHTML = `<p>${S.role === 'AM' ? '资产管理' : '投资银行'}，${S.minutes} 分钟，${S.mode==='easy'?'轻松':'标准'}模式。指标是模拟器的近似，不是官方分数，但思路一致。</p>
+    <h3 style="margin:14px 0 6px;font-size:16px">成绩单</h3>
+    <table><tr><th>指标</th><th>你的结果</th><th>怎么看</th></tr>${rows.map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('')}</table>
+    <h3 style="margin:16px 0 6px;font-size:16px">做得好的地方</h3>
+    ${goods.length ? '<ul style="margin:0;padding-left:20px">' + goods.map(g => `<li class="pos">✓ ${g}</li>`).join('') + '</ul>' : '<p>这一局还没有特别突出的地方，没关系，下一局按下面的提示试试。</p>'}
+    <h3 style="margin:16px 0 6px;font-size:16px">需要改进的地方（按时间顺序，共 ${bad.length} 条）</h3>
+    ${bad.length ? '<table><tr><th style="width:60px">时间</th><th>发生了什么</th><th>下次怎么做</th></tr>' + bad.map(x => `<tr><td>${x.time}</td><td><b class="${x.sev==='bad'?'neg':'wrn'}">${x.title}</b><br>${x.detail}</td><td>${x.tip}</td></tr>`).join('') + '</table>' : '<p class="pos">这一局没有发现明显的错误，很棒！可以试试更长的时长或标准模式。</p>'}
+    ${attrHtml}
+    <h3 style="margin:16px 0 6px;font-size:16px">下一局最该注意的三件事</h3>
+    ${top.length ? '<ol style="margin:0;padding-left:20px">' + top.map(([k,g]) => `<li><b>${k}</b>（出现 ${g.n} 次）：${g.tip}</li>`).join('') + '</ol>' : '<p>保持现在的节奏，试试关掉“盯盘提示”再打一局。</p>'}
+    <details style="margin-top:14px"><summary>复制给 Claude 的文字版</summary><textarea readonly style="width:100%;min-height:140px;margin-top:6px;font:inherit;font-size:12px">${escapeHtml(txt)}</textarea></details>`;
+  $('#endOv').hidden = false;
+}
+
+/* ---------- 启动与事件 ---------- */
+function start(){
+  const role = document.querySelector('input[name=role]:checked').value;
+  const len = parseInt(document.querySelector('input[name=len]:checked').value);
+  const mode = document.querySelector('input[name=mode]:checked').value;
+  const mode0 = document.querySelector('input[name=mode]:checked').value;
+  const setv = mode0 === 'tut' ? 'practice' : document.querySelector('input[name=set]:checked').value;
+  const comp = setv === 'comp';
+  STOCKS = comp ? STOCKS_COMP : STOCKS_PRACTICE; NEWS = comp ? NEWS_COMP : NEWS_PRACTICE;
+  CLIENTS = comp ? CLIENTS_COMP : CLIENTS_PRACTICE; BANKS = comp ? BANKS_COMP : BANKS_PRACTICE;
+  S = newState(role, len, mode0 === 'easy'); sel = comp ? 'EDF' : 'BP'; posView = 'pos'; chartView = 'px';
+  S.comp = comp;
+  S.mode = mode; S.relaxed = mode === 'easy';
+  if(mode === 'tut'){ S.tut = {sc:pendingSc, i:0, f:{}}; S.paused = true; }
+  $('#roleLabel').textContent = role === 'AM' ? '资产管理：2000 万美元只做多基金' : '投资银行：做市与报价';
+  $('#posTitle').textContent = role === 'AM' ? '持仓' : '你的头寸';
+  $('#chartTabs').style.display = role === 'AM' ? '' : 'none';
+  document.querySelectorAll('[data-pv]').forEach(b => b.setAttribute('aria-pressed', b.dataset.pv === 'pos'));
+  document.querySelectorAll('[data-cv]').forEach(b => b.setAttribute('aria-pressed', b.dataset.cv === 'px'));
+  $('#exTicker').innerHTML = STOCKS.map(s => `<option>${s.t}</option>`).join(''); $('#exTicker').value = sel;
+  $('#exQty').value = 10000;
+  headerHTML(); buildSide();
+  say('系统', role === 'AM'
+    ? '开局每只股票 5%，总投资 25%。先把每只买到至少 10%，总仓位到 90% 以上。大单用左侧“请求报价”。'
+    : '客户会陆续询价。填好报价后发送；成交后去右边交易所分批平仓。', 'sys');
+  $('#startOv').hidden = true; $('#endOv').hidden = true;
+  $('#pauseBtn').textContent = S.tut ? '引导中' : '暂停';
+  $('#roleLabel').textContent += mode === 'tut' ? '（新手引导）' : (mode === 'easy' ? '（轻松模式）' : '');
+  clearInterval(timer); timer = setInterval(step, tickMs());
+  render();
+  if(S.tut){ if(S.tut.sc){ (SC[S.tut.sc].setup||(()=>{}))(); render(); tutShow(); } else showMenu(); } else hideCoach();
+}
+function tickMs(){ return TICK_MS/speed*(S && S.relaxed ? 2 : 1); }
+$('#startBtn').onclick = start;
+$('#againBtn').onclick = () => { $('#endOv').hidden = true; $('#startOv').hidden = false; };
+$('#viewBtn').onclick = () => { $('#endOv').hidden = true; };
+$('#pauseBtn').onclick = () => { if(!S || S.over || S.tut) return; S.autoPaused = false; S.paused = !S.paused; $('#pauseBtn').textContent = S.paused ? '继续' : '暂停'; };
+$('#endBtn').onclick = () => { if(!S) return; if(S.over){ $('#startOv').hidden = false; return; } endRound(); };
+$('#speedBtn').onclick = () => { speed = speed === 1 ? 2 : 1; $('#speedBtn').textContent = '速度 ' + speed + 'x'; if(S && !S.over){ clearInterval(timer); timer = setInterval(step, tickMs()); } };
+$('#guideBtn').onclick = () => { showGuide = !showGuide; $('#guideBtn').textContent = '盯盘提示：' + (showGuide ? '开' : '关'); $('#guideBtn').setAttribute('aria-pressed', showGuide); if(S) render(); else $('#alerts').hidden = true; };
+$('#rulesBtn').onclick = () => { if(!S) return toast('先开始一局'); $('#rulesBody').innerHTML = rulesHTML(); $('#rulesOv').hidden = false; };
+$('#rulesClose').onclick = () => { $('#rulesOv').hidden = true; };
+$('#exSell').onclick = () => exTrade('sell');
+$('#exBuy').onclick = () => exTrade('buy');
+$('#exTicker').onchange = e => { sel = e.target.value; if(S) render(); };
+$('#exQty').oninput = () => { if(S){ renderEx(); tutCheck(); } };
+document.addEventListener('pointerdown', e => {
+  const tr = e.target.closest('tr[data-t]'); if(tr && S){ sel = tr.dataset.t; $('#exTicker').value = sel; const rq = document.getElementById('rqT'); if(rq) rq.value = sel; render(); }
+});
+document.addEventListener('click', e => {
+  const hit = e.target.closest('[data-hit]'); if(hit && S){ amHit(parseInt(hit.dataset.hit), hit.dataset.side); return; }
+  const qb = e.target.closest('[data-q]'); if(qb && S){ $('#exQty').value = qb.dataset.q; renderEx(); return; }
+  const pv = e.target.closest('[data-pv]'); if(pv && S){ posView = pv.dataset.pv; document.querySelectorAll('[data-pv]').forEach(b => b.setAttribute('aria-pressed', b === pv)); renderPos(); return; }
+  const cvb = e.target.closest('[data-cv]'); if(cvb && S){ chartView = cvb.dataset.cv; document.querySelectorAll('[data-cv]').forEach(b => b.setAttribute('aria-pressed', b === cvb)); drawChart(); }
+});
+window.addEventListener('resize', () => { if(S) drawChart(); });
+
+/* ---------- 情景训练 ---------- */
+let pendingSc = null; const doneSc = new Set();
+function setPos(t, qty, avg){ const p = S.pos[t]; p.qty = qty; p.avg = qty ? (avg || S.px[t]) : 0; }
+function setWeights(w, avgMul){
+  S.cash = 20e6;
+  STOCKS.forEach(s => { const q = Math.floor((w[s.t]||0)*20e6/S.px[s.t]); const avg = S.px[s.t]*((avgMul&&avgMul[s.t])||1); setPos(s.t, q, avg); S.cash -= q*avg; });
+}
+function lot(x){ return Math.max(1000, Math.round(x/1000)*1000); }
+function qtyTo(t, w){ const v = amVals(); return lot(Math.abs(w*v.pv - S.pos[t].qty*S.px[t])/S.px[t]); }
+function prep(t, q){ const a = document.getElementById('rqT'), b = document.getElementById('rqQ'); if(a) a.value = t; if(b) b.value = q; }
+function exPrep(t, q){ sel = t; $('#exTicker').value = t; $('#exQty').value = q; renderEx(); }
+function flat(t){ return () => S.tut.f.decided !== undefined ? S.pos[t].qty === 0 : S.pos[t].qty === 0; }
+const SC = {
+ ib0:{role:'IB', title:'盯盘重点：投行看哪几个数字', setup:()=>setPos('BP', -30000), steps:[
+  {t:'顶部：带 ★ 的三个最重要', b:'<b>★ 风险敞口 Exposure</b>：越低越好，目标 0。<br><b>★ 佣金收入 Commission</b>：越高越好，说明你成交多。<br><b>★ 总盈亏 Total P&amp;L</b>：越高越好。<br>每个数字下面都写着“越高越好”或“越低越好”，绿色正常、黄色注意、红色要处理。', hl:'.top'},
+  {t:'持仓：净头寸要回到 0', b:'右上表格里看 <b>净头寸 Net Pos</b> 这一列。投行的目标是每一行都尽快回到 <b>0</b>。不是 0 就会显示成黄色，并提示“→ 平仓”。现在 BP 是 −30,000，所以亮黄了。', hl:'#posc'},
+  {t:'行动提示栏', b:'顶部下面这一条会根据数字直接告诉你下一步：客户在等你报价、哪只股票要平仓、敞口太大。比赛时不知道该干嘛，就看这一条。', hl:'#alerts'},
+  {t:'对照表', b:'<table><tr><th>看到</th><th>就做</th></tr><tr><td>有客户在等</td><td>马上报价（NUMT、COMM）</td></tr><tr><td>净头寸不是 0</td><td>去交易所平仓（SSRM）</td></tr><tr><td>敞口变大</td><td>先平仓，再接新单</td></tr><tr><td>发报价前</td><td>四项核对（FFC）</td></tr></table>', end:true}]},
+ am0:{role:'AM', title:'盯盘重点：资管看哪几个数字', steps:[
+  {t:'顶部：带 ★ 的两个最重要', b:'<b>★ 投资比例 % invested</b>：必须 <b>≥ 90%</b>。现在只有约 25%，所以是红的。<br><b>★ 相对基准 vs benchmark</b>：<b>大于 0</b> 就是跑赢对照组，越高越好。<br>另外，<b>可用现金</b>要 ≤ 组合的 10%；<b>未实现盈亏</b>里单只股票不能低于 −50 万。', hl:'.top'},
+  {t:'持仓：两列最重要', b:'<b>占组合 % of Portfolio</b>：每只都要在 <b>10% 至 30%</b>。绿色合规，红色违规（现在全是 5%，所以都是红的）。<br><b>未实现 Unrealised</b>：低于 −25 万会标红并出现 ⚠，提醒你离 50 万止损线不远了。', hl:'#posc'},
+  {t:'行动提示栏', b:'顶部下面这一条会直接告诉你：哪只要买、大约买多少股；哪只超过 30% 要卖；哪只快到止损线。全部合规时会变绿，提示你开始根据新闻调仓。', hl:'#alerts'},
+  {t:'对照表', b:'<table><tr><th>看到</th><th>就做</th></tr><tr><td>投资比例 &lt; 90%</td><td>买入（RA）</td></tr><tr><td>某只 &lt; 10% 或 &gt; 30%</td><td>买到区间内 / 卖到区间内</td></tr><tr><td>某只浮亏接近 −50 万</td><td>减仓（BSRM）</td></tr><tr><td>大单</td><td>找银行，比较报价（EXE）</td></tr><tr><td>相对基准 &lt; 0</td><td>看新闻，超配利好、低配利空（ROI）</td></tr></table>', end:true}]},
+ ib1:{role:'IB', title:'客户买入，你变成空头', steps:[
+  {t:'认识界面', b:'时间已经暂停，价格不会动。先认识四个面板：左上<b>行情 Equities</b>是参考价；中上<b>新闻 News</b>；右上<b>持仓 Positions</b>是你的头寸；顶部一排是你的盈亏。', hl:'.grid'},
+  {t:'客户来询价了', b:'看左下聊天框：<b>HF1</b> 想要 5 万股 BP 的价格。英文下面有中文翻译。他<b>没说买还是卖</b>，所以你要同时报买价和卖价。', hl:'#chat', act:()=>newRfq({client:'HF1', t:'BP', q:50000, side:'buy'})},
+  {t:'用建议报价', b:'代码和数量已经填好。点“<b>建议报价</b>”，让系统帮你填买价和卖价。', hl:'#chatExtra', wait:'suggest'},
+  {t:'看看填了什么', b:()=>`BP 参考价 <b>${fp(S.px.BP)}</b>，建议报价 <b>${$('#qBid').value} / ${$('#qOff').value}</b>：参考价上下各约 0.6%。`, hl:'#chatExtra'},
+  {t:'四项核对，然后发送', b:'① 代码是 BP？② 买价低于卖价？③ 两价夹住参考价？④ 数量 50,000？都对就点“<b>发送报价 Send Quote</b>”。', hl:'#chatExtra', wait:'sent'},
+  {t:'等客户决定', b:'客户正在看你的价格……', hl:'#chat', wait:'decided'},
+  {t:'客户回复 Mine', b:()=>`Mine 是“我买”：HF1 按你的卖价买走 5 万股。你现在<b>空头 ${fmt(Math.abs(S.pos.BP.qty))} 股</b>（右上角是负数）。价格涨你就亏。`, hl:'#posc'},
+  {t:'去交易所买回', b:'交易所已切到 BP，数量已设成“安全一笔”。连续点绿色“<b>买入 BUY</b>”，直到右上角 BP 变成 0。', hl:'#ex', act:()=>exPrep('BP', safeClip('BP')), wait:()=>S.pos.BP.qty===0},
+  {t:'完成', b:()=>`一笔完整的交易：<b>报价 → 成交 → 平仓</b>。已实现盈亏 ${money(ibVals().real)}，佣金 ${money(S.stats.comm)}。`, end:true}]},
+ ib2:{role:'IB', title:'客户卖出，你变成多头', steps:[
+  {t:'客户来询价', b:'<b>HF2</b> 想要 4 万股 HSBC 的价格。照样报双边价。', hl:'#chat', act:()=>newRfq({client:'HF2', t:'HSBC', q:40000, side:'sell'})},
+  {t:'报价', b:'点“建议报价”，做四项核对，然后“发送报价”。', hl:'#chatExtra', wait:'sent'},
+  {t:'等客户决定', b:'……', hl:'#chat', wait:'decided'},
+  {t:'客户回复 Yours', b:()=>`Yours 是“卖给你”：HF2 按你的买价把 4 万股卖给了你。你现在<b>多头 ${fmt(S.pos.HSBC.qty)} 股</b>。价格<b>跌</b>你就亏。`, hl:'#posc'},
+  {t:'去交易所卖出', b:'多头要靠<b>卖出</b>来平仓。这次连续点红色“<b>卖出 SELL</b>”，直到 HSBC 变成 0。', hl:'#ex', act:()=>exPrep('HSBC', safeClip('HSBC')), wait:()=>S.pos.HSBC.qty===0},
+  {t:'记住这张对照', b:'客户 <b>Mine</b> → 你空头 → 交易所<b>买入</b><br>客户 <b>Yours</b> → 你多头 → 交易所<b>卖出</b>', end:true}]},
+ ib3:{role:'IB', title:'报价太宽，客户拒绝', steps:[
+  {t:'故意报宽一点', b:'<b>AM1</b> 想要 3 万股 VW。这次我们故意报得很宽，看看会怎样。', hl:'#chat', act:()=>newRfq({client:'AM1', t:'VW', q:30000, side:'buy', tol:0.005})},
+  {t:'填一个很宽的价', b:()=>`VW 参考价 ${fp(S.px.VW)}。买价填 <b>${(S.px.VW*0.97).toFixed(2)}</b>，卖价填 <b>${(S.px.VW*1.03).toFixed(2)}</b>（上下各 3%），然后发送。`, hl:'#chatExtra', wait:'sent'},
+  {t:'等客户决定', b:'……', hl:'#chat', wait:'decided'},
+  {t:'被拒绝了', b:'AM1 说 <b>Too wide for me</b>：价差太宽，不做了。客户心里有一个能接受的价格，还可以去找别的银行。报得宽每笔更赚，但客户会走，NUMT 和 COMM 两项分数就拿不到。', hl:'#chat'},
+  {t:'再来一次', b:'AM1 又来问了。这次点“<b>建议报价</b>”（上下约 0.6%），然后发送。', hl:'#chatExtra', act:()=>newRfq({client:'AM1', t:'VW', q:30000, side:'buy', tol:0.012}), wait:'sent'},
+  {t:'等客户决定', b:'……', hl:'#chat', wait:()=>S.tut.f.decided && !S.rfq && S.pos.VW.qty !== 0},
+  {t:'成交了，去平仓', b:'这次成交了。你现在是空头，去交易所连续点“买入 BUY”直到 0。', hl:'#ex', act:()=>exPrep('VW', safeClip('VW')), wait:()=>S.pos.VW.qty===0},
+  {t:'结论', b:'报得<b>窄</b>：成交多、风险大一点。报得<b>宽</b>：每笔更赚、但客户会走。比赛里从参考价上下 0.5% 左右起步。', end:true}]},
+ ib4:{role:'IB', title:'手里有头寸时偏移报价', setup:()=>setPos('BP', 50000), steps:[
+  {t:'你已经是多头', b:'假设你之前从客户手里买了 5 万股 BP，还没来得及平仓。看右上角：BP 是 <b>+50,000</b>。', hl:'#posc'},
+  {t:'又来了一个客户', b:'<b>HF1</b> 想要 3 万股 BP。你手里股票太多，希望他是来<b>买</b>的。', hl:'#chat', act:()=>newRfq({client:'HF1', t:'BP', q:30000, side:'buy'})},
+  {t:'看系统怎么偏移', b:'点“<b>建议报价</b>”。', hl:'#chatExtra', wait:'suggest'},
+  {t:'两个价都往下调了', b:()=>`没有头寸时会报约 ${(S.px.BP*0.994).toFixed(2)} / ${(S.px.BP*1.006).toFixed(2)}；现在建议的是 <b>${$('#qBid').value} / ${$('#qOff').value}</b>，两个价都低了一点。卖价更便宜，吸引客户从你这买；买价更低，避免他再卖给你。点“发送报价”。`, hl:'#chatExtra', wait:'sent'},
+  {t:'等客户决定', b:'……', hl:'#chat', wait:'decided'},
+  {t:'这笔成交帮你减了仓', b:()=>`客户买走了 3 万股，你的多头从 5 万降到 <b>${fmt(S.pos.BP.qty)}</b>。剩下的去交易所连续点“卖出 SELL”直到 0。`, hl:'#ex', act:()=>exPrep('BP', safeClip('BP')), wait:()=>S.pos.BP.qty===0},
+  {t:'结论', b:'<b>多头</b>：两个价一起往下调。<b>空头</b>：两个价一起往上调。目的都是让下一笔成交帮你减仓。', end:true}]},
+ ib5:{role:'IB', title:'手里有头寸时来了新闻', setup:()=>setPos('MSFT', -5000), steps:[
+  {t:'你是空头', b:'假设你空头 5,000 股 MSFT，还没来得及平仓（右上角是负数）。', hl:'#posc'},
+  {t:'突然弹出新闻', b:'<b>Microsoft reports much better than expected quarterly earnings</b>（微软业绩远超预期）。利好！价格马上跳涨。', hl:'#news', act:()=>{ fire({t:'MSFT', en:'Microsoft reports much better than expected quarterly earnings', zh:'微软季度业绩远超预期', imp:0.06}); }},
+  {t:'空头遇到利好就会亏', b:()=>`看右上角 MSFT：未实现盈亏 <b>${money(S.pos.MSFT.qty*(S.px.MSFT-S.pos.MSFT.avg))}</b>。价格可能继续涨，不要等。`, hl:'#posc'},
+  {t:'马上买回', b:'交易所已切到 MSFT。连续点“<b>买入 BUY</b>”直到 0。', hl:'#ex', act:()=>exPrep('MSFT', safeClip('MSFT')), wait:()=>S.pos.MSFT.qty===0},
+  {t:'结论', b:'手里有头寸时，新闻是最大的风险。投行不赌方向：<b>接单后越快平仓越安全</b>，这就是 SSRM 分数。', end:true}]},
+ ib6:{role:'IB', title:'胖手指会怎样', steps:[
+  {t:'故意犯一个错', b:'<b>AM2</b> 想要 2 万股 BP。这次我们故意把价格写反，看看会发生什么。', hl:'#chat', act:()=>newRfq({client:'AM2', t:'BP', q:20000, side:'buy'})},
+  {t:'把价格写反', b:()=>`买价填 <b>${(S.px.BP*1.01).toFixed(2)}</b>，卖价填 <b>${(S.px.BP*0.99).toFixed(2)}</b>（买价比卖价还高），然后发送。`, hl:'#chatExtra', wait:'sent'},
+  {t:'系统报警了', b:'看聊天框：“<b>胖手指：买价不低于卖价（报反了）</b>”。真实比赛会扣 FFC 分。', hl:'#chat', wait:'decided'},
+  {t:'客户马上接受了', b:()=>`客户按你的“卖价” ${(S.px.BP*0.99).toFixed(2)} 买走 2 万股，比参考价<b>还便宜 1%</b>，你白送了钱。`, hl:'#chat'},
+  {t:'平仓', b:'你现在空头，去交易所连续点“买入 BUY”直到 0。', hl:'#ex', act:()=>exPrep('BP', safeClip('BP')), wait:()=>S.pos.BP.qty===0},
+  {t:'结论', b:'发报价前<b>四项核对</b>：代码、买价低于卖价、两价夹住参考价、数量。', end:true}]},
+
+ am1:{role:'AM', title:'开局建仓', steps:[
+  {t:'认识界面', b:'时间已经暂停。看顶部“<b>投资比例 % invested</b>”：只有约 25%，因为开局每只只买了 5%。规则要求至少 90%。', hl:'.top'},
+  {t:'看持仓', b:'右上“<b>占组合 % of Portfolio</b>”：每只 5%，显示红色，因为低于 <b>10%</b> 下限。灰色横条是 10% 至 30% 的合规区间。', hl:'#posc'},
+  {t:'新闻', b:'刚来了一条：<b>微软财报远超预期</b>。利好，可以多买 MSFT。', hl:'#news', act:()=>fire({t:'MSFT', en:'Microsoft reports much better than expected quarterly earnings', zh:'微软季度业绩远超预期', imp:0})},
+  {t:'算一下要买多少', b:'左下表单：股票选 <b>MSFT</b>，点“<b>算一下到 20% 要买多少</b>”。', hl:'#chatExtra', act:()=>prep('MSFT', 50000), wait:'calc'},
+  {t:'向银行询价', b:'点“<b>请求报价 Request price</b>”。IB1 和 IB2 会同时报价。', hl:'#chatExtra', wait:()=>S.quotes.length>=2},
+  {t:'挑便宜的', b:'你要<b>买</b>，只看绿色按钮“<b>从它买 Mine</b>”上的 offer，<b>挑低的那家</b>。', hl:'#chatExtra', wait:'bought'},
+  {t:'其余 4 只', b:'用同样的方法把其余 4 只也买到 <b>10% 以上</b>，让投资比例达到 <b>90%</b>。步骤：选股票 → 算一下 → 请求报价 → 挑 offer 低的买。', hl:'#posc', wait:()=>{ const v = amVals(); return v.inv >= 0.9 && STOCKS.every(s => { const w = weight(s.t, v); return w >= 0.0995 && w <= 0.3005; }); }},
+  {t:'完成', b:'每只都在 10% 至 30%，投资比例超过 90%。比赛开局最重要的事你会了。', end:true}]},
+ am2:{role:'AM', title:'利空新闻：减仓，再买回别的', setup:()=>setWeights({BABA:.18, MSFT:.18, VW:.18, HSBC:.20, BP:.18}), steps:[
+  {t:'你已经建好仓', b:'假设每只 18% 至 20%，投资比例约 92%。', hl:'#posc'},
+  {t:'强利空', b:'新闻：<b>HSBC CEO resigns; regulator opens money-laundering enquiry</b>（汇丰 CEO 辞职，监管启动反洗钱调查）。价格马上下跌。', hl:'#news', act:()=>fire({t:'HSBC', en:'HSBC CEO resigns; regulator opens money-laundering enquiry', zh:'汇丰 CEO 辞职，监管机构启动反洗钱调查', imp:-0.10})},
+  {t:'减到 12% 左右', b:()=>`表单已选好 HSBC、填好要卖的数量（约 ${fmt(qtyTo('HSBC',0.12))} 股）。点“请求报价”。`, hl:'#chatExtra', act:()=>prep('HSBC', qtyTo('HSBC', 0.12)), wait:()=>S.quotes.length>=2},
+  {t:'卖给 bid 高的那家', b:'你要<b>卖</b>，只看红色按钮“<b>卖给它 Yours</b>”上的 bid，<b>挑高的那家</b>。', hl:'#chatExtra', wait:'sold'},
+  {t:'投资比例掉下去了', b:()=>`HSBC 降到了 ${pct(weight('HSBC', amVals()),1)}，但投资比例变成 <b>${pct(amVals().inv,1)}</b>，低于 90%！卖出的钱要马上买进别的股票。表单已换成 MSFT。`, hl:'.top', act:()=>prep('MSFT', lot(Math.max(0, 0.93*amVals().pv - amVals().shares)/S.px.MSFT)), wait:'bought'},
+  {t:'结论', b:'<b>卖和买要成对出现</b>：减了一只，马上加另一只，保持 90% 以上。', end:true}]},
+ am3:{role:'AM', title:'权重超过 30%：再平衡', setup:()=>setWeights({MSFT:.32, BABA:.15, VW:.15, HSBC:.15, BP:.15}), steps:[
+  {t:'MSFT 超标了', b:'假设 MSFT 涨了很多，现在占 <b>32%</b>，超过 30% 上限（右上角显示红色）。就算你还看好，也必须减。', hl:'#posc'},
+  {t:'减到 29%', b:()=>`表单已填好：卖出约 ${fmt(qtyTo('MSFT',0.29))} 股 MSFT。点“请求报价”。`, hl:'#chatExtra', act:()=>prep('MSFT', qtyTo('MSFT', 0.29)), wait:()=>S.quotes.length>=2},
+  {t:'卖给 bid 高的那家', b:'看“卖给它 Yours”上的 bid，挑高的那家。', hl:'#chatExtra', wait:'sold'},
+  {t:'把钱买进别的', b:'表单已换成 BABA。点“请求报价”，再挑 offer 低的那家买入。', hl:'#chatExtra', act:()=>prep('BABA', lot(Math.max(0, 0.93*amVals().pv - amVals().shares)/S.px.BABA)), wait:'bought'},
+  {t:'结论', b:'股票涨多了，权重会<b>自动变大</b>。比赛中每隔几分钟看一眼“占组合”这一列。', end:true}]},
+ am4:{role:'AM', title:'接近止损线', setup:()=>setWeights({VW:.20, MSFT:.18, BABA:.18, HSBC:.18, BP:.18}, {VW:1.11}), steps:[
+  {t:'VW 亏了不少', b:()=>`看右上角 VW：未实现盈亏 <b>${money(S.pos.VW.qty*(S.px.VW-S.pos.VW.avg))}</b>。离 50 万止损线只差一点了。`, hl:'#posc'},
+  {t:'规则优先', b:'你可能觉得它会反弹，但继续买入摊低成本是陷阱。把 VW <b>减掉一半</b>。表单已填好，点“请求报价”。', hl:'#chatExtra', act:()=>prep('VW', lot(S.pos.VW.qty/2)), wait:()=>S.quotes.length>=2},
+  {t:'卖给 bid 高的那家', b:'挑“卖给它 Yours”上 bid 高的那家。', hl:'#chatExtra', wait:'sold'},
+  {t:'把钱买进别的', b:'表单已换成 BP，点“请求报价”，挑 offer 低的买入，保持 90% 以上。', hl:'#chatExtra', act:()=>prep('BP', lot(Math.max(0, 0.93*amVals().pv - amVals().shares)/S.px.BP)), wait:'bought'},
+  {t:'结论', b:'减掉一半后，VW 再跌，亏损的速度也只有原来的一半。<b>到线之前就减</b>，BSRM 分数才拿得住。', end:true}]},
+ am5:{role:'AM', title:'小单走交易所', setup:()=>setWeights({BABA:.18, MSFT:.18, VW:.18, HSBC:.18, BP:.18}), steps:[
+  {t:'看小单的价格', b:'右边交易所已选 BABA、数量 500。看“卖出 SELL”和“买入 BUY”离参考价多远，以及“相对参考价的滑点”。', hl:'#ex', act:()=>exPrep('BABA', 500)},
+  {t:'再看大单', b:'把数量改成 <b>50000</b>，看看价格变成什么样。', hl:'#ex', wait:()=>parseInt($('#exQty').value) >= 50000},
+  {t:'差别很大', b:()=>`滑点从约 0.06% 变成了 <b>${$('#exSlip').textContent}</b>。这就是为什么大单要找银行。把数量改回 <b>500</b>，点“买入 BUY”试一下。`, hl:'#ex', wait:()=>S.tut.f.ex && parseInt($('#exQty').value) <= 1000},
+  {t:'结论', b:'<b>小单</b>：交易所很划算。<b>大单</b>：找银行，比较报价。', end:true}]}
+};
+let hlEl = null;
+function hideCoach(){ $('#coach').hidden = true; if(hlEl){ hlEl.classList.remove('hl'); hlEl = null; } }
+function showMenu(){
+  if(hlEl){ hlEl.classList.remove('hl'); hlEl = null; }
+  const role = S.role;
+  const list = Object.entries(SC).filter(([k,v]) => v.role === role);
+  $('#coachN').textContent = role === 'IB' ? '投资银行 Investment Bank' : '资产管理 Asset Manager';
+  $('#coachT').textContent = '情景训练：选一个开始';
+  $('#coachB').innerHTML = '<p style="margin:0 0 6px">时间会暂停，按顺序练最好。</p>' + list.map(([k,v],i) => `<button class="btn" style="display:block;width:100%;text-align:left;margin:4px 0" data-sc="${k}">${doneSc.has(k)?'✓ ':''}${i+1}. ${v.title}</button>`).join('')
+    + `<button class="btn" style="display:block;width:100%;text-align:left;margin:8px 0 0" data-swrole="1">切换到${role==='IB'?'资产管理':'投资银行'}的情景</button>`;
+  $('#coachNext').textContent = '用轻松模式开始一局'; $('#coachNext').disabled = false;
+  $('#coachSkip').textContent = '关闭，自由练习';
+  S.tut.menu = true;
+  $('#coach').hidden = false;
+}
+function runSc(k){
+  pendingSc = k;
+  document.querySelector(`input[name=role][value=${SC[k].role}]`).checked = true;
+  document.querySelector('input[name=mode][value=tut]').checked = true;
+  start(); pendingSc = null;
+}
+function tutShow(){
+  if(!S || !S.tut || !S.tut.sc) return;
+  S.tut.menu = false;
+  const sc = SC[S.tut.sc], st = sc.steps[S.tut.i];
+  if(st.act && !st._done){ st.act(); render(); }
+  $('#coachN').textContent = `${sc.title}　第 ${S.tut.i+1} 步，共 ${sc.steps.length} 步`;
+  $('#coachT').textContent = st.t;
+  $('#coachB').innerHTML = typeof st.b === 'function' ? st.b() : st.b;
+  const nx = $('#coachNext'), sk = $('#coachSkip');
+  if(st.end){ doneSc.add(S.tut.sc); nx.textContent = '回到情景列表'; nx.disabled = false; sk.textContent = '关闭，自由练习'; }
+  else if(st.wait){ nx.textContent = '完成上面的操作后自动继续'; nx.disabled = true; sk.textContent = '回到情景列表'; }
+  else { nx.textContent = '下一步'; nx.disabled = false; sk.textContent = '回到情景列表'; }
+  if(hlEl) hlEl.classList.remove('hl');
+  hlEl = st.hl ? document.querySelector(st.hl) : null;
+  if(hlEl){ hlEl.classList.add('hl'); try{ hlEl.scrollIntoView({behavior:'smooth', block:'nearest'}); }catch(e){} }
+  $('#coach').hidden = false;
+}
+function tutDone(w){ return typeof w === 'function' ? w() : !!S.tut.f[w]; }
+function tutCheck(){
+  if(!S || !S.tut || !S.tut.sc || S.tut.menu) return;
+  const st = SC[S.tut.sc].steps[S.tut.i];
+  if(st && st.wait && tutDone(st.wait)){ S.tut.i++; S.tut.f.decided = undefined; S.tut.f.sent = false; S.tut.f.suggest = false; S.tut.f.bought = false; S.tut.f.sold = false; S.tut.f.ex = false; setTimeout(tutShow, 500); }
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-sc]'); if(b){ runSc(b.dataset.sc); return; }
+  const r = e.target.closest('[data-swrole]'); if(r && S){ document.querySelector(`input[name=role][value=${S.role==='IB'?'AM':'IB'}]`).checked = true; document.querySelector('input[name=mode][value=tut]').checked = true; start(); }
+});
+$('#coachNext').onclick = () => {
+  if(!S || !S.tut) return;
+  if(S.tut.menu){ hideCoach(); document.querySelector('input[name=mode][value=easy]').checked = true; document.querySelector(`input[name=role][value=${S.role}]`).checked = true; start(); return; }
+  const st = SC[S.tut.sc].steps[S.tut.i];
+  if(st.end){ document.querySelector('input[name=mode][value=tut]').checked = true; document.querySelector(`input[name=role][value=${S.role}]`).checked = true; start(); return; }
+  if(st.wait) return;
+  S.tut.i++; tutShow();
+};
+$('#coachSkip').onclick = () => {
+  if(!S) return hideCoach();
+  if(S.tut && S.tut.sc && !(SC[S.tut.sc].steps[S.tut.i]||{}).end){ document.querySelector('input[name=mode][value=tut]').checked = true; start(); return; }
+  S.tut = null; hideCoach(); S.paused = false; S.nextRfq = S.tick + 10; $('#pauseBtn').textContent = '暂停';
+  toast('已关闭训练，游戏开始计时');
+};
+</script>
+</body>
+</html>
